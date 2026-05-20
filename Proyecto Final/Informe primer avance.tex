@@ -1,0 +1,87 @@
+\documentclass[12pt, journal, onecolumn]{IEEEtran}
+\raggedbottom
+%
+\usepackage{instructivo}  % Commands for multiple choice
+\graphicspath{{./}{./fig/}}
+
+\usepackage[natbib=true,style=trad-unsrt,backend=biber]{biblatex}
+
+\addbibresource{literatura.bib}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{float}
+\usepackage{capt-of}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+
+\begin{document}
+	%
+	% paper title
+	% Titles are generally capitalized except for words such as a, an, and, as,
+	% at, but, by, for, in, nor, of, on, or, the, to and up, which are usually
+	% not capitalized unless they are the first or last word of the title.
+	% Linebreaks \\ can be used within to get better formatting as desired.
+	% Do not put math or special symbols in the title.
+\title{Proyecto: Semáforo Vehicular y Peatonal}
+	
+	
+\author{Gerald~David~Blanco-Sáenz,~\IEEEmembership{Estudiante,~ITCR},~Melanie~Espinoza-Hernandez,~\IEEEmembership{Estudiante,~ITCR,},~Nayshell~Freckleton-White,~\IEEEmembership{Estudiante,~ITCR} 
+	y~Pablo~Cabrera-Montealegre,~\IEEEmembership{Estudiante,~ITCR,}}
+	
+	
+	% The paper headers
+\markboth{EL3215 Laboratorio de Electrónica Analógica, IS2026}%
+{EL3215 Laboratorio de Electrónica Analógica}
+	
+	
+	% make the title area
+\maketitle
+	
+\begin{abstract}
+		Se propone el diseño de un sistema de semáforo vehicular y peatonal, cuyo objetivo principal es simular un cruce vehicular completo mediante la gestión del flujo de tránsito y la interacción a través de solicitudes peatonales. El sistema incorpora señalización visual (rojo, amarillo, verde) y auditiva, control de tiempos regresivos mediante displays, y una etapa de conversión de energía de corriente alterna (CA) a corriente directa (CD). En este primer avance, se documenta exclusivamente la etapa de alimentación del circuito, la cual es responsable de proveer los niveles de tensión regulados adecuados para el funcionamiento de las etapas analógicas y digitales posteriores.
+\end{abstract}
+	
+\section{Introducción}
+	Los sistemas de control de tráfico son fundamentales para la regulación segura y eficiente de la movilidad vehicular y peatonal en entornos urbanos. Estos sistemas integran elementos de temporización, señalización visual y auditiva, así como mecanismos de interacción con los usuarios. En el contexto de la ingeniería electrónica, el diseño de un sistema de semáforo permite aplicar conceptos relacionados con la generación de señales, temporización, control lógico, visualización de información y procesamiento de señales de audio. Además, representa un ejemplo claro de integración de subsistemas analógicos y digitales en una aplicación real. 
+	
+	Este proyecto se enfoca en el diseño e implementación de un sistema completo de semáforo vehicular y peatonal, utilizando componentes electrónicos discretos y circuitos digitales básicos, evitando el uso de dispositivos programables de acuerdo con las especificaciones. El objetivo principal de este primer documento es presentar la propuesta de diseño de cada etapa del sistema, detallando sus componentes y la justificación de las decisiones de diseño.
+	
+	\section{Objetivos}
+	\subsection{Objetivo General}
+	Introducir al estudiante ante un problema de ingeniería en donde requiera poner en práctica las habilidades y conceptos adquiridos en el uso de las herramientas de simulación, equipos de medición, prototipado y ensamble de circuitos eléctricos transistorizados por medio de circuitos impresos.
+	
+	\subsection{Objetivos Específicos}
+	\begin{itemize}
+		\item Introducir al estudiante en el diseño de ingeniería bajo el establecimiento de una solución a un problema planteado.
+		\item Utilizar herramientas de simulación en la etapa de diseño de sistemas electrónicos que integren etapas analógicas y digitales.
+		\item Desarrollar habilidades de implementación de sistemas electrónicos bajo el apoyo de equipo especializado para mediciones.
+		\item Adquirir conocimiento y habilidades necesarias para el diseño e implementación de circuitos impresos o PCB para ensamble de circuitos eléctricos.
+		\item Fomentar las habilidades requeridas para el trabajo en equipo en proyectos de ingeniería.
+	\end{itemize}
+	
+	\section{Alimentación}
+	\subsection{Descripción}
+	Para el funcionamiento del semáforo eléctrico y sus respectivos sistemas lógicos, se requiere una fuente de alimentación que convierta la energía proveniente de la red eléctrica de 120\,$\text{V}_{\text{rms}}$ a 60\,Hz en niveles de tensión de corriente directa (CD) regulados y ajustados. Estos voltajes son vitales para cumplir con las condiciones de operación de las compuertas lógicas, los circuitos de temporización y las etapas de potencia para la señalización visual y acústica.
+	
+	El circuito convertidor de CA a CD incluye los siguientes componentes principales: un transformador reductor, un puente rectificador de onda completa, capacitores de filtrado y reguladores de voltaje lineal. Estos elementos actúan en conjunto para entregar las tensiones estables que requiere el resto del sistema, protegiendo los componentes de variaciones indeseadas.
+	
+	\subsection{Diagrama del circuito}
+	% Descomente y ajuste el nombre de la imagen:
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.8\textwidth]{diagrama_alimentacion.png}
+		\caption{Diagrama del circuito de Alimentación.}
+		\label{fig:alimentacion}
+	\end{figure}
+	
+	\subsection{Justificación de diseño}
+	El diseño del circuito de alimentación de la Fig. \ref{fig:alimentacion} se fundamenta en la necesidad de convertir los 120\,$\text{V}_{\text{rms}}$ de corriente alterna (CA) a voltajes de corriente directa (CD) regulados estables, habitualmente de 5\,V para los componentes de lógica digital (TTL/CMOS), y otros voltajes mayores (como 12\,V) si así lo requieren la amplificación de la señal acústica o los arreglos de LEDs de alta luminosidad.
+	
+	Inicialmente, el transformador reductor disminuye el voltaje de entrada a un nivel seguro y apto para su manipulación. Luego, el puente rectificador de diodos convierte la señal alterna en una señal pulsante en una sola dirección. Para disminuir el rizado de esta señal, se incorporan capacitores de gran valor en capacitancia que filtran las oscilaciones y otorgan una primera etapa de estabilización a la señal.
+	
+	Finalmente, los reguladores de voltaje integrados (como los de la familia 78XX) proporcionan una salida continua y fija, absorbiendo las variaciones en el consumo de corriente al encender diferentes estados del semáforo. Se agregan capacitores de desacople adicionales en los terminales de entrada y salida de estos reguladores para estabilizar la respuesta transitoria del dispositivo y atenuar posibles ruidos de alta frecuencia introducidos por la conmutación lógica, garantizando así un desempeño ininterrumpido en todo el circuito de control de tráfico.
+	
+\end{document}
