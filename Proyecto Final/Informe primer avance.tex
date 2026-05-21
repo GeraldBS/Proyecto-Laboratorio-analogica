@@ -132,4 +132,39 @@ La lógica de interconexión cumple dos funciones principales: controlar cuando 
 La compuerta NAND se usa como una NOT por la necesidad de detener el oscilador cuando el sistema se encuentra en $S_0$. Dado que $Q_0 = 1$ en dicho estado, se invierte esta señal para obtener un nivel bajo en el pin Reset (pin 4) del LM555CM, deteniendo la oscilación. Cuando el contador avanza a cualquier otro estado, $Q_0 = 0$, la salida del inversor pasa a nivel alto y el LM555CM comienza a oscilar libremente, avanzando entre los estados/salidas de manera automática.
 
 La compuerta OR se utiliza ya que se necesita combinar dos fuentes de reloj: el botón peatonal y la salida del LM555CM. En $S_0$, como el 555 está detenido, únicamente el botón puede generar el flanco positivo necesario para hacer que el CD4017BP avance hacia $Q_1$. En los estados siguientes, el botón no interviene y es el LM555CM quien genera los flancos de reloj automáticamente.
+
+\subsection{Gráficas}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=0.9\textwidth]{f0.png}
+		\caption{Gráfica de CLK.}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=0.9\textwidth]{f1.png}
+		\caption{Gráfica de CLK vs $S_0$.}
+    \end{minipage}
+
+    \vspace{0.5cm}
+
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=0.9\textwidth]{f1.png}
+		\caption{Gráfica de CLK vs $S_0$.}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=0.9\textwidth]{f3.png}
+		\caption{Gráfica de CLK vs $S_2$.}
+    \end{minipage}
+    \hfill
+    \includegraphics[width=0.4\textwidth]{ftot.png}
+	\caption{Gráfica de $S_0$ vs $S_1$ vs $S_2$.}
+\end{figure}
+
 \end{document}
