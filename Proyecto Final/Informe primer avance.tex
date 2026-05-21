@@ -28,8 +28,8 @@
 \title{Proyecto: Semáforo Vehicular y Peatonal}
 	
 	
-\author{Gerald~David~Blanco-Sáenz,~\IEEEmembership{Estudiante,~ITCR},~Melanie~Espinoza-Hernandez,~\IEEEmembership{Estudiante,~ITCR,},~Nayshell~Freckleton-White,~\IEEEmembership{Estudiante,~ITCR} 
-	y~Pablo~Cabrera-Montealegre,~\IEEEmembership{Estudiante,~ITCR,}}
+\author{Gerald~David~Blanco-Sáenz,~\IEEEmembership{Estudiante,~ITCR},~Melanie~Espinoza-Hernandez,~\IEEEmembership{Estudiante,~ITCR},~Nayshell~Freckleton-White,~\IEEEmembership{Estudiante,~ITCR} 
+	y~Pablo~Cabrera-Montealegre,~\IEEEmembership{Estudiante,~ITCR}}
 	
 	
 	% The paper headers
@@ -70,7 +70,7 @@
 	
 	\subsection{Diagrama del circuito}
 	% Descomente y ajuste el nombre de la imagen:
-	\begin{figure}[h!]
+	\begin{figure}[h]
 		\centering
 		\includegraphics[width=0.8\textwidth]{diagrama_alimentacion.png}
 		\caption{Diagrama del circuito de Alimentación.}
@@ -84,4 +84,52 @@
 	
 	Finalmente, los reguladores de voltaje integrados (como los de la familia 78XX) proporcionan una salida continua y fija, absorbiendo las variaciones en el consumo de corriente al encender diferentes estados del semáforo. Se agregan capacitores de desacople adicionales en los terminales de entrada y salida de estos reguladores para estabilizar la respuesta transitoria del dispositivo y atenuar posibles ruidos de alta frecuencia introducidos por la conmutación lógica, garantizando así un desempeño ininterrumpido en todo el circuito de control de tráfico.
 	
+\section{Máquina de estado}
+\subsection{Descripción}
+Esta subsección describe la parte del circuito que se encarga de controlar la secuencia de iluminación del semáforo, determinando cuál luz se activa, su color y la duración de cada estado. El sketch inicial del circuito se muestra en la Figura \ref{fsm1}. El circuito requiere una tensión de alimentación de 5 $V$, proporcionada por el circuito de alimentación. Para el mejor entendimiento del lector, se va a dividir la máquina en tres bloques funcionales: El generador de reloj (CLK), la máquina de estados principal y la interconexión entre ambos mencionados anteriormente. El diagrama de como construirlo se puede apreciar en la Figura \ref{fsm}.
+
+Para el generador de reloj se implementa un LM555 TIMER configurado para que opere en un modo astable, para ello su pin de $VCC$ va conectado al voltaje de 5 $V$. Para ello se utilizan dos resistencias de $R_1$ =10.5 $k \Omega$ y de $R_2$ = 9.5 $k \Omega$, y dos capacitores de $C_1$ = 10 $\mu F$ y $C_2$ = 0.01 $\mu F$.  $R_1$ se conecta entre la alimentación y al pin de Discharge (pin 7). $R_2$ se conecta entre pin del Discharge y el nodo común de los pines Threshold (pin 6) y el Trigger (pin 2), donde también se conecta $C_1$. $C_2$ se conecta entre el pin Control Voltage (pin 5). $C_1$, $C_2$ y LM555 se conectan al GND.
+
+La máquina de estados principal se compone de una CD4017B, que se encarga de cambiar de estado/salida cada flanco de reloj positivo. La salida del 4017 se decodifica mediante compuertas 74LS32 (OR) para activar los LEDs correspondientes de cada estado, una alimentación de 5 $V$ y tres resistencias de 330 $\Omega$.
+
+La interconexión se compone de 2 compuertas lógicas, una 74LS00 (NAND) y una 74LS32 (OR). Las entradas de la NAND van conectadas a la salida Q0 de la 4017 y su salida va conectada al Reset (pin 4) de la 555. La primera entrada de la OR va conectada al botón peatonal, la segunda va al Output (pin 3) del 555  y su salida va conectada al clk (pin 14) de la 4017. 
+
+\subsection{Diagrama del circuito}
+	% Descomente y ajuste el nombre de la imagen:
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.7\textwidth]{fsm.jpg}
+		\caption{Diagrama inicial del flujo de la máquina de estado.}
+		\label{fsm1}
+	\end{figure}
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.9\textwidth]{diagrama_fsm.png}
+		\caption{Diagrama del circuito la máquina de estado.}
+		\label{fsm}
+	\end{figure}
+	
+	
+\subsection{Justificación de diseño}
+\subsubsection{Generador de reloj}
+El generador de reloj se implementó con el LM555CM en modo astable 
+porque este produce una onda cuadrada estable de 5 o 0 $V$ en su salida, lo que es compatible con los niveles lógicos del CD4017. Se llegó a los valores de las resistencias mediante prueba y error. El capacitor $C_2$ se conecta entre el pin Control Voltage (pin 5) y GND con el propósito de filtrar ruido en la tensión de referencia interna del LM555, garantizando una oscilación lo más estable posible.
+
+
+\subsubsection{Máquina de estado principal}
+El CD4017 es un contador de década que activa secuencialmente sus 10 salidas, $Q_0$ a $Q_9$, en cada flanco positivo de reloj. La asignación de salidas se justifica de la siguiente manera:
+
+$Q_0$ corresponde al estado base $S_0$, en el cual el semáforo vehicular permanece en verde indefinidamente hasta que el usuario presione el botón peatonal. En este estado, la lógica de interconexión mantiene el LM555CM detenido, por lo que el contador no avanza ya que esta apagado.
+$Q_1$ no tiene ningún LED conectado directamente. Durante las pruebas se determinó que conectar un LED a esta salida causaba que el estado durara un tiempo considerablemente menor al esperado, produciendo un parpadeo que era casi imperceptible. Por esta razón, $Q_1$ se conecta únicamente a una compuerta OR como señal auxiliar para que haya una LED conectada, y el LED amarillo se desplazó a $Q_2$.
+$Q_2$ corresponde al estado $S_1$, donde se activa el LED amarillo del semáforo vehicular. Este estado dura exactamente un período de reloj, es decir, aproximadamente 5 $s$.
+De $Q_3$ a $Q_8$ se le atribuye al estado $S_2$, donde se activa el LED rojo del semáforo vehicular, durante 30 $s$. Al agrupar 6 salidas consecutivas, el sistema permanece en rojo durante $6 \times 5~\text{s} = 30~\text{s}$, cumpliendo con la especificación de diseño.
+Finalmente, $Q_9$ se conecta al pin Reset (RST) del CD4017, forzando el reinicio del contador a $Q_0$ y reiniciando el ciclo completo hasta que el botón peatonal sea presionado nuevamente.
+
+\subsubsection{Interconexión}
+La lógica de interconexión cumple dos funciones principales: controlar cuando debe de empezar a funcionar el LM555CM y permitir que el botón peatonal fuerce la transición desde $S_0$ a $S_1$.
+La compuerta NAND se usa como una NOT por la necesidad de detener el oscilador cuando el sistema se encuentra en $S_0$. Dado que $Q_0 = 1$ en dicho estado, se invierte esta señal para obtener un nivel bajo en el pin Reset (pin 4) del LM555CM, deteniendo la oscilación. Cuando el contador avanza a cualquier otro estado, $Q_0 = 0$, la salida del inversor pasa a nivel alto y el LM555CM comienza a oscilar libremente, avanzando entre los estados/salidas de manera automática.
+
+La compuerta OR se utiliza ya que se necesita combinar dos fuentes de reloj: el botón peatonal y la salida del LM555CM. En $S_0$, como el 555 está detenido, únicamente el botón puede generar el flanco positivo necesario para hacer que el CD4017BP avance hacia $Q_1$. En los estados siguientes, el botón no interviene y es el LM555CM quien genera los flancos de reloj automáticamente.
 \end{document}
