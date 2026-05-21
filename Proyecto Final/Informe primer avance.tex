@@ -167,4 +167,38 @@ La compuerta OR se utiliza ya que se necesita combinar dos fuentes de reloj: el 
 	\caption{Gráfica de $S_0$ vs $S_1$ vs $S_2$.}
 \end{figure}
 
+\section{Sistema de Señalización Auditiva}
+
+\subsection{Descripción}
+Este sistema fue diseñado con el propósito de generar una señal auditiva para los peatones cuando este permitido cruzar la calle. Consiste en generar un sonido periódico cuando el semáforo peatonal se encuentre en verde y que este mismo se acelera una vez que falten cinco segundos para que se vuelva a poner en rojo. 
+Tomando en cuenta las especificaciones solicitadas cumpliendo únicamente con el uso de electrónica básica y sin ningún tipo de microcontroladores, se llego a la conclusión que la mejor forma de manejarlo era por medio de osciladores RC con la que se pueden ajustar la frecuencias y compuertas Schmitt Trigger acompañadas de un amplificador para el sonido de salida.
+Dado estos requerimientos se pude decir que el sistema completo se divide en cuatro bloques funcionales principales:
+\begin{enumerate}
+    \item Generación del tono audible.
+    \item Generación de la frecuencia de repetición lenta.
+    \item Generación de la frecuencia de repetición rápida.
+    \item Etapa de selección y amplificación de potencia.
+\end{enumerate}
+En cuanto al funcionamiento del circuito, todo empieza generando una señal de una frecuencia audible (en este caso unos 2kHz aproximadamente) por medio de un oscilador principal. Se selecciona esta frecuencia ya que se encuentra dentro del rango perceptible por el oído humano siendo perceptible fácilmente.
+Adicional a esto, se generan además dos osciladores mas de aproximadamente 1Hz y 5Hz sujetos a modificaciones según las pruebas del circuito ensamblado en físico. Estas señales no funcionan como audio directamente, sino que al combinarse lógicamente generan periodos de activación de la señal de tono según la velocidad que sea deseada y dependiendo directamente del estado del semáforo peatonal.
+Dependiendo del estado en el que se encuentre el semáforo y ligado a la parte de la maquina de estados se generan posteriormente dos compuertas AND con las que se selecciona la velocidad del tono que se desea en cierto momento admitiendo como entradas para cada una la señal rápida o lenta y una señal que se puede interpretar como “últimos_5s”. Mediante esto, solo una de las señales debería estar activa en un momento determinada, pero por medidas de seguridad, se implementa entra las salidas de ambas una compuerta OR con las que se asegura que en ningún momento se activen ambas señales produciendo bugs. A la salida de esta compuerta se adiciona nuevamente un AND para así tener la suma del selector de velocidad y el tono audible y que se esta manera suene la bocina cuando la señal de velocidad deseada esta activa.
+Finalmente, se toma la señal resultante y se pasa por una etapa amplificadora con un transistor NPN en configuración de conmutación ya que no es necesario utilizar un amplificado líneal mas complicado porque se tienen como salida ya una señal cuadrada.
+\subsection{Diagrama del circuito}
+
+\subsection{Justificación de Diseño}
+\begin{itemize}
+	\item{Compuerta Schmitt Trigger 74LS14}
+		Se selecciono un circuito integrado 74LS14 por la necesidad de generar señales cuadradas de un voltaje en corriente continua. Permite se manera sencilla implementar osciladores RC con bastante estabilidad evitando problemas de ruido y transiciones. Ademas, permite la generación de varios osciladores con un mismo circuito conectando una entrada y salida mediante una resistencia y un capacitor entre la entrada y tierra. Esto genera que conforme los valores elegidos de cada componente y según la carga o descarga del capacitor se genere de manera simple una señal cuadrada.
+	\item{Compuertas AND/OR}
+		Permiten procesar la lógica necesaria para que no haya bugs en el sistema. Permiten una selección de velocidad de pitidos y una mezcla de estos con la señal audible.
+	\item{Transistor NPN}
+		El transistor NPN fue seleccionado debido a que las compuertas lógicas no son capaces de suministrar la corriente necesaria para alimentar directamente el parlante. El transistor añade corriente y por ende potencia entre la lógica digital y logra que la carga de salida sea audible más fácilmente.
+		Como beneficio adicional, esta configuración protege las compuertas lógicas contra sobrecorrientes y permite utilizar una fuente de alimentación de mayor voltaje para aumentar el volumen del sonido emitido.
+	\item{Resistencia de Base}
+		La resistencia conectada a la base del transistor limita la corriente de entrada, evitando daños tanto en la salida lógica como en el transistor. Este componente resulta fundamental para garantizar una operación segura del sistema.
+	\item{Parlante}
+		Se utilizó un parlante de baja impedancia como dispositivo de salida debido a su simplicidad y facilidad de integración. El uso de ondas cuadradas permite generar tonos audibles claramente distinguibles sin necesidad de circuitos de audio complejos.
+\end{itemize}
+
+
 \end{document}
