@@ -12,6 +12,7 @@
 \usepackage{array}
 \usepackage{float}
 \usepackage{capt-of}
+\usepackage{hyperref}
 \newcolumntype{C}{>{\centering\arraybackslash}X}
 % correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
@@ -62,7 +63,7 @@
 		\item Fomentar las habilidades requeridas para el trabajo en equipo en proyectos de ingeniería.
 	\end{itemize}
 	
-	\section{Alimentación}
+	\section{\textbf{Alimentación}}
 	\subsection{Descripción}
 	Para el funcionamiento del semáforo eléctrico y sus respectivos sistemas lógicos, se requiere una fuente de alimentación que convierta la energía proveniente de la red eléctrica de 120\,$\text{V}_{\text{rms}}$ a 60\,Hz en niveles de tensión de corriente directa (CD) regulados y ajustados. Estos voltajes son vitales para cumplir con las condiciones de operación de las compuertas lógicas, los circuitos de temporización y las etapas de potencia para la señalización visual y acústica.\\
 	
@@ -72,7 +73,7 @@
 	% Descomente y ajuste el nombre de la imagen:
 	\begin{figure}[h]
 		\centering
-		\includegraphics[width=0.8\textwidth]{diagrama_alimentacion.png}
+		\includegraphics[width=0.7\textwidth]{diagrama_alimentacion.png}
 		\caption{Diagrama del circuito de Alimentación.}
 		\label{fig:alimentacion}
 	\end{figure}
@@ -83,8 +84,10 @@
 	Inicialmente, el transformador reductor disminuye el voltaje de entrada a un nivel seguro y apto para su manipulación. Luego, el puente rectificador de diodos convierte la señal alterna en una señal pulsante en una sola dirección. Para disminuir el rizado de esta señal, se incorporan capacitores de gran valor en capacitancia que filtran las oscilaciones y otorgan una primera etapa de estabilización a la señal.\\
 	
 	Finalmente, los reguladores de voltaje integrados (como los de la familia 78XX) proporcionan una salida continua y fija, absorbiendo las variaciones en el consumo de corriente al encender diferentes estados del semáforo. Se agregan capacitores de desacople adicionales en los terminales de entrada y salida de estos reguladores para estabilizar la respuesta transitoria del dispositivo y atenuar posibles ruidos de alta frecuencia introducidos por la conmutación lógica, garantizando así un desempeño ininterrumpido en todo el circuito de control de tráfico.\\
-	
-\section{Máquina de estados}
+
+\newpage
+
+\section{\textbf{Máquina de estados}}
 \subsection{Descripción}
 Esta subsección describe el circuito encargado de controlar la lógica completa del semáforo vehicular y peatonal, incluyendo la generación de estados, temporización, control de transición y activación de las señales luminosas. El circuito implementa una máquina de estados síncrona basada en lógica digital discreta, utilizando compuertas lógicas, contadores y temporizadores, cumpliendo con las especificaciones establecidas para el proyecto de semáforo vehicular y peatonal.\\
 
@@ -150,6 +153,8 @@ La transición entre estados depende directamente de la finalización de ciertos
 		\label{fsm1}
 	\end{figure}
 
+\newpage
+
 \subsubsection{\textbf{Lógica de decodificación}}
 La lógica de decodificación se implementó mediante compuertas AND y OR debido a la necesidad de combinar múltiples estados del contador para generar las señales finales de control.\\
 
@@ -163,6 +168,7 @@ Cada LED posee una resistencia limitadora de 330 $\Omega$, seleccionada para man
 
 El uso de lógica discreta para controlar directamente los LEDs permite observar claramente la transición entre estados y facilita tanto la simulación como el diagnóstico del circuito durante la etapa de implementación física.
 
+\newpage
 
 \section{\textbf{Display 7-Segmentos}}
 \subsection{Descripción}
@@ -172,7 +178,7 @@ El sistema utiliza un temporizador 555 en configuración astable como generador 
 
 Las salidas BCD de cada contador son conectadas a decodificadores CD4511, los Las salidas BCD de cada contador son conectadas a decodificadores CD4511, los cuales convierten la información binaria en las señales necesarias para controlar los displays de 7 segmentos. Además, cada segmento incorpora una resistencia limitadora de corriente de 330\,$\Omega$ con el objetivo de proteger tanto los displays como los circuitos integrados.\\
 
-El módulo fue configurado para iniciar el conteo en 20 segundos, disminuyendo progresivamente hasta llegar a 00, permitiendo visualizar el tiempo restante para el cruce peatonal. Además, se implementará una lógica de detección de cero mediante compuertas lógicas, de manera que cuando el sistema detecta simultáneamente 00 en decenas y unidades, el reloj queda bloqueado y el contador deja de disminuir, evitando conteos inválidos posteriores al cero.\\
+El módulo fue configurado para iniciar el conteo en 20 segundos, disminuyendo progresivamente hasta llegar a 00, permitiendo visualizar el tiempo restante para el cruce peatonal. Además, se implementará una lógica de detección de cero mediante compuertas lógicas, de manera que cuando el sistema detecta simultáneamente 00 en decenas y unidades, el reloj queda bloqueado y el contador deja de disminuir, evitando conteos inválidos posteriores al cero.
 
 
 \subsection{Diagrama del circuito}
@@ -180,7 +186,7 @@ El módulo fue configurado para iniciar el conteo en 20 segundos, disminuyendo p
 	
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=1\textwidth]{Diagrama_Multisim_Display.jpg}
+		\includegraphics[width=0.9\textwidth]{Diagrama_Multisim_Display.jpg}
 		\caption{Diagrama del circuito del Display de 7-segmentos en el software Multisim.}
 		\label{diag_circuito_display}
 	\end{figure}
@@ -203,8 +209,9 @@ Finalmente, de esta manera se puede verificar individualmente que este bloque se
 		\label{diag_bloq_display}
 	\end{figure}
 	
+\newpage
 	
-\section{Sistema de Señalización Auditiva}
+\section{\textbf{Sistema de Señalización Auditiva}}
 
 \subsection{Descripción}
 Este sistema fue diseñado con el propósito de generar una señal auditiva para los peatones cuando este permitido cruzar la calle. Consiste en generar un sonido periódico cuando el semáforo peatonal se encuentre en verde y que este mismo se acelera una vez que falten cinco segundos para que se vuelva a poner en rojo. \\
@@ -273,5 +280,59 @@ Finalmente, se toma la señal resultante y se pasa por una etapa amplificadora c
     \end{minipage}
 
 \end{figure}
+
+\newpage
+
+\begin{thebibliography}{99}
+
+\bibitem{Floyd}
+T. L. Floyd, \textit{Dispositivos Electrónicos}, 8.a ed. México: Pearson Prentice Hall, 2008.
+
+\bibitem{555video}
+MADE IN COLOMBIA, ``Circuito integrado 555 explicación completa,'' YouTube, Dec. 16, 2017. [Online]. Available: \url{https://www.youtube.com/watch?v=n15R_n_TshA}
+
+\bibitem{555delay}
+``Cómo construir un circuito temporizador 555 con un retardo de apagado,'' Learning About Electronics. [Online]. Available: \url{https://www.learningaboutelectronics.com/Articulos/Circuito-temporizador-555-con-retardo-de-apagado.php}
+
+\bibitem{CD4017video}
+ElectronicaLED, ``Conexión y funcionamiento del circuito integrado CD4017,'' YouTube, Jun. 27, 2020. [Online]. Available: \url{https://www.youtube.com/watch?v=WflcnppydVY}
+
+\bibitem{4017datasheet}
+``IC 4017 Datasheet,'' ElecCircuit. [Online]. Available: \url{https://www.eleccircuit.com/ic-4017-datasheet/}
+
+\bibitem{74192}
+``74LS192 Decade Up/Down Counter With Clear Datasheet,'' Datasheet Hub. [Online]. Available: \url{https://www.datasheethub.com/74ls192-decade-up-down-counter-with-clear/}
+
+\bibitem{74LS32}
+``74LS32 Quad 2-Input OR Logic Gate IC Datasheet,'' Circuits DIY. [Online]. Available: \url{https://www.circuits-diy.com/74ls32-quad-2-input-or-logic-gate-ic-datasheet/}
+
+\bibitem{74LS08}
+``74LS08 Quad 2-Input AND Gate Datasheet,'' Datasheet Hub. [Online]. Available: \url{https://www.datasheethub.com/74ls08-quad-2-input-and-gate/}
+
+\bibitem{displayvideo}
+``Funcionamiento del display de 7 segmentos,'' YouTube. [Online]. Available: \url{https://www.youtube.com/watch?v=892DbbZ_GYM}
+
+\bibitem{countervideo}
+``Implementación de contadores digitales y displays,'' YouTube. [Online]. Available: \url{https://www.youtube.com/watch?v=PSDCvyHsHbk}
+
+\bibitem{fsmvideo}
+``Máquinas de estados y lógica secuencial,'' YouTube. [Online]. Available: \url{https://www.youtube.com/watch?v=8t-BtlKVZ7g}
+
+\bibitem{fuentes}
+J. Silva-Martínez and E. Sánchez-Sinencio, ``Diseño e implementación de fuentes de alimentación lineales reguladas para laboratorios de electrónica,'' \textit{Revista de Educación en Ingeniería Eléctrica}, vol. 14, no. 2, pp. 45--52, Jul. 2018.
+
+\bibitem{Sadiku}
+M. N. O. Sadiku and C. K. Alexander, \textit{Fundamentos de Circuitos Eléctricos}, 7.a ed. Ciudad de México, México: McGraw-Hill, 2021.
+
+\bibitem{74LS14}
+Renesas Technology Corp., ``HD74LS14 Hex Schmitt Trigger Inverters Datasheet,'' Rev. 3.00, Jul. 2005.
+
+\bibitem{4511}
+Philips Semiconductors, ``HEF4511B BCD to 7-Segment Latch/Decoder/Driver Datasheet,'' Jan. 1995.
+
+\bibitem{555datasheet}
+Texas Instruments, ``NA555, NE555, SA555, SE555 Precision Timers Datasheet,'' Rev. I, Sep. 2014.
+
+\end{thebibliography}
 
 \end{document}
