@@ -94,9 +94,10 @@ Para facilitar el análisis del sistema, el circuito se divide en cuatro bloques
 
 El generador de reloj se implementa mediante un 555 configurado en modo astable, el cual produce una señal cuadrada periódica utilizada como señal de sincronización del sistema.\\
 
-La máquina de estados principal se implementa utilizando un contador CD4017BP, el cual activa secuencialmente sus salidas $Q_0$ a $Q_9$ con cada flanco positivo de reloj. Cada salida representa un estado específico del sistema de semáforo. La secuencia inicia en $Q_0$, donde el semáforo vehicular permanece en verde y el peatonal en rojo hasta que el usuario presione el botón peatonal. Una vez recibido el pulso del botón, el sistema comienza la secuencia automática de transición.\\
+La máquina de estados principal se implementa utilizando un contador binario 74LS90, el cual activa secuencialmente sus salidas $O_0$ a $O_9$ con cada flanco negativo de reloj, y el 74LS42 que se encarga de recibir el número en binario y convertirlo a decimal. Cada salida representa un estado específico del sistema de semáforo. La secuencia inicia en $Q_0$, donde el semáforo vehicular permanece en verde y el peatonal en rojo hasta que el usuario presione el botón peatonal. Una vez recibido el pulso del botón, el sistema comienza la secuencia automática de transición.\\
 
-Las señales provenientes de las salidas del CD4017BP son procesadas mediante compuertas lógicas 74LS08 (AND), 74LS32 (OR) y 74LS14 (Schmitt Trigger Inverter). Estas compuertas permiten combinar múltiples estados para generar correctamente las señales de control de los LEDs vehiculares y peatonales. Además, la compuerta Schmitt Trigger se utiliza para limpiar y estabilizar las transiciones provenientes del contador y evitar problemas asociados al ruido o a señales intermedias.\\
+Las señales provenientes de las salidas de ambos circuitos integrados son procesadas mediante compuertas lógicas 74LS08 (AND), 74LS32 (OR), 74LS00 (NAND) y 74LS14 (NOT). Estas compuertas permiten combinar múltiples estados para generar correctamente las señales de control de los LEDs vehiculares y peatonales. %Además, la compuerta Schmitt Trigger se utiliza para limpiar y estabilizar las transiciones provenientes del contador y evitar problemas asociados al ruido o a señales intermedias.
+\\
 
 La etapa de señalización visual está conformada por LEDs indicadores correspondientes al semáforo vehicular y peatonal. Cada LED cuenta con una resistencia limitadora para proteger los dispositivos ante sobrecorriente. El semáforo vehicular utiliza LEDs rojo, amarillo y verde, mientras que el sistema peatonal utiliza LEDs rojo y verde. La activación de cada LED depende directamente de la lógica generada por las compuertas asociadas a los distintos estados de la máquina.\\
 
@@ -118,25 +119,27 @@ El funcionamiento general del sistema consiste en mantener el semáforo vehicula
 \subsection{Justificación de diseño}
 
 \subsubsection{\textbf{Generador de reloj}}
-El generador de reloj se implementó utilizando el LM555CM en configuración astable debido a su simplicidad, estabilidad y facilidad para ajustar la frecuencia mediante componentes pasivos externos. Este circuito permite generar una señal cuadrada compatible con niveles TTL de 5 $V$, adecuada para excitar directamente el CD4017BP y el resto de la lógica digital.\\
+El generador de reloj se implementó utilizando el LM555CM en configuración astable debido a su simplicidad, estabilidad y facilidad para ajustar la frecuencia mediante componentes pasivos externos. Este circuito permite generar una señal cuadrada compatible con niveles TTL de 5 $V$, adecuada para excitar directamente el 74LS90, 74LS42 y el resto de la lógica digital.\\
 
-La frecuencia del reloj se ajustó aproximadamente a 1 Hz para que cada transición de estado representara un segundo real, simplificando así la implementación de los tiempos requeridos para el semáforo. El capacitor conectado al pin de control del LM555CM se incorporó para filtrar ruido y mejorar la estabilidad temporal del sistema.\\
+La frecuencia del reloj se ajustó aproximadamente a 5 Hz para que cada transición de estado representara un segundo real, simplificando así la implementación de los tiempos requeridos para el semáforo. El capacitor conectado al pin de control del LM555CM se incorporó para filtrar ruido y mejorar la estabilidad temporal del sistema.\\
 
 \subsubsection{\textbf{Máquina de estados principal}}
-La máquina de estados principal se diseñó utilizando un CD4017BP debido a que este dispositivo permite generar una secuencia ordenada de estados sin necesidad de memorias adicionales o lógica secuencial compleja. Cada salida del contador representa directamente un estado específico del sistema, simplificando considerablemente la implementación física del semáforo.\\
+La máquina de estados principal se diseñó utilizando un 74LS90 debido a que este dispositivo permite generar una secuencia de números binarios de manera ordenada y la 74LS42 ordena los estados sin necesidad de memorias adicionales o lógica secuencial compleja. Cada salida del contador representa directamente un estado específico del sistema, simplificando considerablemente la implementación física del semáforo.\\
 
 La asignación de estados se realizó de la siguiente manera:
 
 \begin{itemize}
-    \item $Q_0$: semáforo vehicular en verde fijo y peatonal en rojo. Este estado permanece activo indefinidamente hasta recibir una solicitud peatonal.
+    \item $O_0$: semáforo vehicular en verde fijo y peatonal en rojo. Este estado permanece activo indefinidamente hasta recibir una solicitud peatonal.
     
-    \item $Q_1$, $Q_2$ y $Q_3$: corresponden al parpadeo del LED verde vehicular antes de realizar la transición a amarillo.
+    \item $O_1$: corresponde al parpadeo del LED verde vehicular antes de realizar la transición a amarillo.
     
-    \item $Q_4$: activa el LED amarillo vehicular durante aproximadamente 5 segundos.
+    \item $O_2$: activa el LED amarillo vehicular durante aproximadamente 5 segundos.
     
-    \item $Q_5$, $Q_6$, $Q_7$ y $Q_8$: corresponden al estado peatonal habilitado, donde el semáforo vehicular permanece en rojo y el peatonal en verde, incluyendo el parpadeo final del LED peatonal.
+    \item $O_3$, $O_4$, $O_5$ y $O_6$: corresponden al estado peatonal habilitado, donde el semáforo vehicular permanece en rojo y el peatonal en verde, incluyendo el parpadeo final del LED peatonal.
     
-    \item $Q_9$: se utiliza para reiniciar automáticamente el CD4017BP mediante el pin RESET, retornando el sistema al estado inicial.
+    \item $O_7$: se conecta a una NAND para que el semáforo vuelva al verde, ya que el reinicio "casero" que ocurre en el 74LS90 dura aproximadamente 1.5 s en ser efectivo.
+    
+    \item $O_8$ y $O_9$: se conectan a una resistencia de un valor de 1 k$\Omega$, resistencias de 
 \end{itemize}
 
 Adicionalmente, el sistema incorpora un módulo de conteo regresivo sincronizado con la máquina de estados, permitiendo controlar la duración exacta de determinados estados del semáforo.\\
