@@ -90,31 +90,28 @@
 \subsection{Descripción}
 Esta subsección describe el circuito encargado de controlar la lógica completa del semáforo vehicular y peatonal, incluyendo la generación de estados, temporización, control de transición y activación de las señales luminosas. El circuito implementa una máquina de estados síncrona basada en lógica digital discreta, utilizando compuertas lógicas, contadores y temporizadores, cumpliendo con las especificaciones establecidas para el proyecto de semáforo vehicular y peatonal.\\
 
-Para facilitar el análisis del sistema, el circuito se divide en cuatro bloques funcionales principales: el generador de reloj, la máquina de estados principal, la lógica de decodificación y control, y la etapa de señalización visual del semáforo.\\
+La FSM consta de cuatro estados codificados mediante dos bits, los cuales son almacenados en dos flip-flops JK CD4027 sincronizados por una señal de reloj generada con un temporizador 555. Cada estado representa una etapa específica del funcionamiento del semáforo peatonal y vehicular, permitiendo controlar tanto las luces como las señales sonoras del sistema.\\
 
-El generador de reloj se implementa mediante un 555 configurado en modo astable, el cual produce una señal cuadrada periódica utilizada como señal de sincronización del sistema.\\
+El estado inicial, $S_0$ ($00$), corresponde al estado de reposo del sistema. En esta condición permanecen encendidos el semáforo vehicular en verde y el semáforo peatonal en rojo, indicando el paso exclusivo para los vehículos. El sistema permanece en este estado hasta que se detecta la pulsación del botón peatonal, momento en el cual se realiza la transición hacia el estado $S_1$.\\
 
-La máquina de estados principal se implementa utilizando un contador binario 74LS90, el cual activa secuencialmente sus salidas $O_0$ a $O_9$ con cada flanco negativo de reloj, y el 74LS42 que se encarga de recibir el número en binario y convertirlo a decimal. Cada salida representa un estado específico del sistema de semáforo. La secuencia inicia en $Q_0$, donde el semáforo vehicular permanece en verde y el peatonal en rojo hasta que el usuario presione el botón peatonal. Una vez recibido el pulso del botón, el sistema comienza la secuencia automática de transición.\\
+El estado $S_1$ ($01$) tiene una duración de 5 segundos. Durante este intervalo el semáforo vehicular verde comienza a parpadear, advirtiendo a los conductores del cambio de estado. Finalizado este tiempo, la máquina de estados avanza automáticamente al estado $S_2$.\\
 
-Las señales provenientes de las salidas de ambos circuitos integrados son procesadas mediante compuertas lógicas 74LS08 (AND), 74LS32 (OR), 74LS00 (NAND) y 74LS14 (NOT). Estas compuertas permiten combinar múltiples estados para generar correctamente las señales de control de los LEDs vehiculares y peatonales. %Además, la compuerta Schmitt Trigger se utiliza para limpiar y estabilizar las transiciones provenientes del contador y evitar problemas asociados al ruido o a señales intermedias.
-\\
+En el estado $S_2$ ($10$), el semáforo vehicular cambia a amarillo fijo durante otros 5 segundos. Esta etapa funciona como una transición entre el paso vehicular y el paso peatonal, permitiendo que los vehículos despejen la intersección antes de detenerse completamente.\\
 
-La etapa de señalización visual está conformada por LEDs indicadores correspondientes al semáforo vehicular y peatonal. Cada LED cuenta con una resistencia limitadora para proteger los dispositivos ante sobrecorriente. El semáforo vehicular utiliza LEDs rojo, amarillo y verde, mientras que el sistema peatonal utiliza LEDs rojo y verde. La activación de cada LED depende directamente de la lógica generada por las compuertas asociadas a los distintos estados de la máquina.\\
+Finalmente, el sistema entra al estado $S_3$ ($11$), el cual tiene una duración total de 25 segundos. En este estado se enciende el semáforo vehicular rojo y simultáneamente el semáforo peatonal verde, permitiendo el cruce seguro de los peatones. El tiempo restante para el cruce se muestra mediante los displays de siete segmentos. Durante los últimos 5 segundos de este estado, el LED verde peatonal comienza a parpadear para advertir que el tiempo de cruce está por finalizar. De forma simultánea, el sistema auditivo pasa de emitir pulsos lentos a pulsos rápidos con el fin de proporcionar una advertencia adicional. Una vez concluidos los 25 segundos, la máquina retorna automáticamente al estado de reposo $S_0$, reiniciando el ciclo de funcionamiento.\\
 
-El funcionamiento general del sistema consiste en mantener el semáforo vehicular en verde hasta recibir una solicitud peatonal. Posteriormente, el sistema realiza una secuencia de parpadeo del verde vehicular, cambia a amarillo durante un intervalo fijo y finalmente habilita el paso peatonal mediante el LED verde peatonal y el LED rojo vehicular. Finalizada la secuencia, el contador se reinicia automáticamente y el sistema vuelve al estado inicial.
- \\
+El control temporal de cada uno de los estados se realiza mediante un contador decimal CD4017, el cual recibe como entrada la señal de reloj proveniente del temporizador 555. Las diferentes salidas del contador son empleadas por la lógica combinacional para determinar la duración de cada estado y generar las transiciones correspondientes. Adicionalmente, la lógica combinacional utiliza las variables de estado almacenadas en los flip-flops para controlar el encendido de los LED indicadores, el funcionamiento de los displays de siete segmentos y la generación de las señales de control del sistema sonoro.\\
+
+Los LED correspondientes a los semáforos son controlados mediante transistores BJT utilizados como interruptores electrónicos, permitiendo manejar la corriente requerida por cada indicador sin sobrecargar las salidas de la lógica digital. Cada LED cuenta con su respectiva resistencia limitadora de corriente y es alimentado a partir de la fuente de 5 V del sistema.\\
 
 \subsection{Diagrama del circuito}
-	% Descomente y ajuste el nombre de la imagen:
-	
+
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=0.7\textwidth]{Diagrama_Multisim_FSM.jpg}
 		\caption{Diagrama del circuito de la FSM con los leds en el software Multisim.}
 		\label{fsm1}
 	\end{figure}
-	
-	
 	
 \subsection{Justificación de diseño}
 
