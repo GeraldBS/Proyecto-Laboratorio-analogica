@@ -141,43 +141,45 @@ La implementación de la máquina de estados se realizó utilizando un clock deb
 \newpage
 
 \section{\textbf{Display 7-Segmentos}}
+
 \subsection{Descripción}
-El módulo de display fue diseñado para implementar el conteo regresivo visual del sistema de semáforo vehicular y peatonal. Su función principal consiste en mostrar al usuario el tiempo restante disponible durante la habilitación del paso peatonal.\\
 
-El sistema utiliza un temporizador 555 en configuración astable como generador de pulsos de reloj, encargado de producir la señal periódica que sincroniza el conteo. Esta señal es enviada a dos contadores BCD CD4510, uno destinado al manejo de las unidades y otro al de las decenas del conteo regresivo.\\
+El módulo de señalización visual fue diseñado para mostrar al usuario el tiempo restante disponible para realizar el cruce peatonal. Su funcionamiento se encuentra directamente sincronizado con la máquina de estados finitos (FSM), de manera que el conteo únicamente se habilita durante el estado correspondiente al paso peatonal $S_3$.
 
-Las salidas BCD de cada contador son conectadas a decodificadores CD4511, los Las salidas BCD de cada contador son conectadas a decodificadores CD4511, los cuales convierten la información binaria en las señales necesarias para controlar los displays de 7 segmentos. Además, cada segmento incorpora una resistencia limitadora de corriente de 330\,$\Omega$ con el objetivo de proteger tanto los displays como los circuitos integrados.\\
+Para implementar el conteo regresivo se emplean dos contadores síncronos descendentes 74LS192, encargados de representar las unidades y las decenas del tiempo restante. Ambos dispositivos reciben una señal de reloj de 1Hz, de modo que el conteo disminuye una unidad por segundo. La lógica de control proveniente de la FSM determina el momento en que los contadores deben cargarse con el valor inicial y cuándo deben permanecer activos, garantizando que el conteo se realice únicamente durante el intervalo de cruce peatonal.
 
-El módulo fue configurado para iniciar el conteo en 20 segundos, disminuyendo progresivamente hasta llegar a 00, permitiendo visualizar el tiempo restante para el cruce peatonal. Además, se implementará una lógica de detección de cero mediante compuertas lógicas, de manera que cuando el sistema detecta simultáneamente 00 en decenas y unidades, el reloj queda bloqueado y el contador deja de disminuir, evitando conteos inválidos posteriores al cero.
+Las salidas BCD de los contadores son conectadas a dos decodificadores CD4511, los cuales convierten la información binaria en las señales necesarias para controlar los displays de siete segmentos. Cada segmento incorpora una resistencia limitadora de corriente con el fin de proteger tanto los displays como los circuitos integrados frente a corrientes altas.
+
+De esta forma, el sistema presenta en tiempo real el tiempo restante para el cruce peatonal, actualizando la información cada segundo y manteniendo una visualización clara y fácilmente interpretable por el usuario. La integración con la máquina de estados asegura que el conteo se encuentre completamente sincronizado con el funcionamiento general del semáforo, mostrando únicamente información válida durante la fase peatonal.
 
 
 \subsection{Diagrama del circuito}
-	% Descomente y ajuste el nombre de la imagen:
 	
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.9\textwidth]{Diagrama_Multisim_Display.jpg}
+		\includegraphics[width=0.9\textwidth]{Diagrama_Multisim_Display.png}
 		\caption{Diagrama del circuito del Display de 7-segmentos en el software Multisim.}
 		\label{diag_circuito_display}
 	\end{figure}
 		
 	
-\subsection{Justificación de diseño}
-El diseño del módulo de display se desarrolló utilizando componentes digitales discretos debido a la necesidad de implementar un sistema de conteo regresivo confiable, visible y compatible con la lógica general del semáforo peatonal. Se seleccionaron contadores BCD CD4510 porque permiten realizar conteos descendentes de manera sencilla y facilitan la manipulación de valores decimales sin requerir lógica adicional compleja.\\
+\subsection{Justificación del diseño}
 
-Asimismo, se emplearon decodificadores CD4511 debido a su compatibilidad directa con displays de 7 segmentos de cátodo común, reduciendo significativamente la cantidad de conexiones y simplificando la implementación física del sistema. Esto permite obtener una visualización clara del tiempo restante para el cruce peatonal.\\
+El diseño del módulo de señalización visual se desarrolló con el objetivo de proporcionar al usuario una indicación clara y precisa del tiempo restante para el cruce peatonal.
 
-La utilización del temporizador 555 como generador de reloj se debe a su facilidad de configuración, estabilidad y bajo costo, permitiendo generar pulsos periódicos necesarios para sincronizar el conteo del sistema. Además, las resistencias limitadoras fueron incorporadas para proteger los segmentos LED de sobrecorrientes y aumentar la confiabilidad del circuito.\\
+\begin{itemize}
 
-Finalmente, de esta manera se puede verificar individualmente que este bloque sea funcional antes de integrar el sistema completo del semáforo.\\
+    \item Contadores 74LS192: Se seleccionaron dos contadores síncronos BCD 74LS192 debido a que permiten realizar conteos de manera sencilla, incluyendo entradas de carga paralela y de habilitación. Estas características facilitan la inicialización del conteo al comenzar la fase peatonal y la implementación del conteo regresivo sin requerir lógica adicional.
 
+    \item Reloj de 1Hz: Se empleó una señal de reloj de 1Hz debido a que el tiempo mostrado al usuario debe actualizarse cada segundo. De esta forma, existe una relacion directa entre cada pulso de reloj y la disminución de una unidad en el contador, simplificando el diseño.
 
-\begin{figure}[H]
-		\centering
-		\includegraphics[width=1\textwidth]{Diagrama_de_bloques_Display.png}
-		\caption{Diagrama de bloques para el Display.}
-		\label{diag_bloq_display}
-	\end{figure}
+    \item Decodificadores CD4511: Se utilizaron decodificadores BCD a siete segmentos CD4511 para convertir automáticamente las salidas BCD de los contadores en las señales necesarias para controlar los displays. La incorporación de estos circuitos evita implementar la lógica de decodificación mediante compuertas, reduciendo la complejidad del circuito.
+
+    \item Displays de siete segmentos: Los displays fueron seleccionados por su alta visibilidad y facilidad de interpretación permiten que el peatón conozca el tiempo restante disponible para realizar el cruce.
+
+\end{itemize}
+
+La integración del módulo con la máquina de estados permite que el conteo permanezca completamente sincronizado con la operación del semáforo, habilitándose únicamente durante el estado que permite el cruce peatonal. Esta arquitectura reduce la cantidad de lógica adicional requerida.
 	
 \newpage
 	
