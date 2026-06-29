@@ -218,9 +218,9 @@ Finalmente, de esta manera se puede verificar individualmente que este bloque se
 \subsection{Descripción}
 Este sistema fue diseñado con el propósito de generar una señal auditiva para los peatones cuando este permitido cruzar la calle. Consiste en generar un sonido periódico cuando el semáforo peatonal se encuentre en verde y que este mismo se acelera una vez que falten cinco segundos para que se vuelva a poner en rojo. \\
 
-Tomando en cuenta las especificaciones solicitadas cumpliendo únicamente con el uso de electrónica básica y sin ningún tipo de microcontroladores, se llego a la conclusión que la mejor forma de manejarlo era por medio de osciladores RC con la que se pueden ajustar la frecuencias y compuertas Schmitt Trigger acompañadas de un amplificador para el sonido de salida.\\
+Tomando en cuenta las especificaciones solicitadas cumpliendo únicamente con el uso de electrónica básica y sin ningún tipo de microcontroladores, se llego a la conclusión que la mejor forma de manejarlo era por medio de osciladores aestebles con circuitos integrados 555 que permiten ajustar la frecuencia deseada por medio de resistencias y capacitores.\\
 
-Dado estos requerimientos se pude decir que el sistema completo se divide en cuatro bloques funcionales principales:
+Dado estos requerimientos se pude decir que el sistema completo se divide en los siguientes bloques funcionales principales:
 \begin{enumerate}
     \item Generación del tono audible.
     \item Generación de la frecuencia de repetición lenta.
@@ -228,14 +228,11 @@ Dado estos requerimientos se pude decir que el sistema completo se divide en cua
     \item Etapa de selección y amplificación de potencia.
 \end{enumerate}
 
-En cuanto al funcionamiento del circuito, todo empieza generando una señal de una frecuencia audible (en este caso unos 2kHz aproximadamente) por medio de un oscilador principal. Se selecciona esta frecuencia ya que se encuentra dentro del rango perceptible por el oído humano siendo perceptible fácilmente.
-Adicional a esto, se generan además dos osciladores mas de aproximadamente 1Hz y 5Hz sujetos a modificaciones según las pruebas del circuito ensamblado en físico.\\
+En cuanto al funcionamiento del circuito, todo inicia con la generación de tres señales cuadradas mediante temporizadores 555 configurados como osciladores astables. La primera corresponde al tono audible, con una frecuencia aproximada de 1\,kHz, seleccionada por encontrarse dentro del rango de mayor sensibilidad del oído humano y, por tanto, ser fácilmente perceptible. Adicionalmente, se generan dos señales de aproximadamente 1Hz y 2Hz, las cuales se emplean para producir las velocidades de repetición lenta y rápida del tono, respectivamente.\\
 
-Estas señales no funcionan como audio directamente, sino que al combinarse lógicamente generan periodos de activación de la señal de tono según la velocidad que sea deseada y dependiendo directamente del estado del semáforo peatonal.\\
+Posteriormente, la selección de la velocidad y la habilitación del sonido se realizan mediante un multiplexor (MUX). Este recibe como señales de control las salidas provenientes de la máquina de estados, específicamente las señales PEATONAL_ROJO y ULTIMOS_5_SEG. Dependiendo de la combinación de estas entradas, el multiplexor selecciona una de las tres posibles salidas: ausencia de sonido, repetición lenta (1Hz) o repetición rápida (2Hz). De esta manera, se concentra en un único bloque la lógica necesaria para determinar el comportamiento del sistema de audio según el estado del semáforo. La señal de salida habilitada por el multiplexor se combina finalmente mediante una compuerta AND con el tono audible de 1kHz.\\
 
-Dependiendo del estado en el que se encuentre el semáforo y ligado a la parte de la maquina de estados se generan posteriormente dos compuertas AND con las que se selecciona la velocidad del tono que se desea en cierto momento admitiendo como entradas para cada una la señal rápida o lenta y una señal que se puede interpretar como los 'últimos 5s'. Mediante esto, solo una de las señales debería estar activa en un momento determinada, pero por medidas de seguridad, se implementa entra las salidas de ambas una compuerta OR con las que se asegura que en ningún momento se activen ambas señales produciendo bugs. A la salida de esta compuerta se adiciona nuevamente un AND para así tener la suma del selector de velocidad y el tono audible y que se esta manera suene la bocina cuando la señal de velocidad deseada esta activa.\\
-
-Finalmente, se toma la señal resultante y se pasa por una etapa amplificadora con un transistor NPN en configuración de conmutación ya que no es necesario utilizar un amplificado líneal mas complicado porque se tienen como salida ya una señal cuadrada.\\
+Para la etapa de amplificación, dado que la lógica digital entrega una amplitud de 5V pero con una capacidad de corriente baja para el uso requerido, se implementa inicialmente un divisor de tensión para adaptar el nivel de entrada del amplificador. Posteriormente, la señal atraviesa un amplificador de dos etapas: una primera etapa de ganancia de voltaje basada en un transistor en configuración de emisor común y una segunda etapa de potencia tipo push-pull clase AB, ambas alimentadas con una fuente de 12V. Esta configuración proporciona tanto la ganancia de tensión como la capacidad de corriente necesarias para accionar el parlante de forma adecuada, garantizando un nivel de sonido adecuado para la aplicación.\\
 
 \subsection{Diagrama del circuito}
 
@@ -247,24 +244,25 @@ Finalmente, se toma la señal resultante y se pasa por una etapa amplificadora c
 	\end{figure}
 
 \subsection{Justificación de Diseño}
-\begin{itemize}
-	\item{Compuerta Schmitt Trigger 74LS14}
-		Se selecciono un circuito integrado 74LS14 por la necesidad de generar señales cuadradas de un voltaje en corriente continua. Permite se manera sencilla implementar osciladores RC con bastante estabilidad evitando problemas de ruido y transiciones. Ademas, permite la generación de varios osciladores con un mismo circuito conectando una entrada y salida mediante una resistencia y un capacitor entre la entrada y tierra. Esto genera que conforme los valores elegidos de cada componente y según la carga o descarga del capacitor se genere de manera simple una señal cuadrada.\\
-		
-	\item{Compuertas AND/OR}
-		Permiten procesar la lógica necesaria para que no haya bugs en el sistema. Permiten una selección de velocidad de pitidos y una mezcla de estos con la señal audible.\\
-		
-	\item{Transistor NPN}
-		El transistor NPN fue seleccionado debido a que las compuertas lógicas no son capaces de suministrar la corriente necesaria para alimentar directamente el parlante. El transistor añade corriente y por ende potencia entre la lógica digital y logra que la carga de salida sea audible más fácilmente.
-		Como beneficio adicional, esta configuración protege las compuertas lógicas contra sobrecorrientes y permite utilizar una fuente de alimentación de mayor voltaje para aumentar el volumen del sonido emitido.\\
-		
-	\item{Resistencia de Base}
-		La resistencia conectada a la base del transistor limita la corriente de entrada, evitando daños tanto en la salida lógica como en el transistor. Este componente resulta fundamental para garantizar una operación segura del sistema.\\
-		
-	\item{Parlante}
-		Se utilizó un parlante de baja impedancia como dispositivo de salida debido a su simplicidad y facilidad de integración. El uso de ondas cuadradas permite generar tonos audibles claramente distinguibles sin necesidad de circuitos de audio complejos.
-\end{itemize}
+En esta sección se justifica la selección de los principales componentes utilizados en la implementación del circuito de generación y amplificación del tono audible.
 
+\begin{itemize}
+
+    \item Temporizadores 555: Se emplearon tres temporizadores 555 configurados en modo astable debido a su simplicidad, y estabilidad para generar señales cuadradas. Un primer temporizador produce el tono audible de aproximadamente 1kHz, mientras que los otros dos generan las frecuencias de repetición de 1Hz y 2Hz, correspondientes a las velocidades lenta y rápida requeridas. Además, estos circuitos integrados permiten ajustar fácilmente la frecuencia mediante la selección de resistencias y capacitores.
+
+    \item Multiplexor: Se seleccionó un multiplexor como bloque de decisión debido a que simplifica considerablemente la lógica de selección de la señal de salida. A partir de las señales de control PEATONAL_ROJO y ULTIMOS_5_SEG, el MUX determina automáticamente si la salida debe permanecer deshabilitada o si debe haber una repetición lenta o rápida. Esta solución reduce la cantidad de compuertas lógicas necesarias.
+
+    \item Compuerta AND: La salida del multiplexor se combina mediante una compuerta AND con la señal de 1kHz. De esta manera, el tono audible únicamente está presente cuando la señal de habilitación seleccionada por el MUX se encuentra activa.
+
+    \item Divisor de tensión: Antes de la etapa de amplificación se implementó un divisor de tensión para adaptar el nivel de la señal proveniente de la lógica digital al valor requerido por la etapa amplificadora. Esto permite establecer un punto de operación adecuado para el transistor de entrada.
+
+    \item Amplificador en emisor común: La primera etapa de amplificación corresponde a un amplificador de voltaje con transistor BJT en configuración de emisor común. Esta topología fue elegida por su elevada ganancia de voltaje, su facilidad de diseño.
+
+    \item Etapa push-pull clase AB: Como etapa final se implementó un amplificador de potencia push-pull clase AB alimentado con 12V. Esta configuración proporciona la corriente necesaria para activar adecuadamente el parlante. Se debe tomar en cuenta que por la corriente manejada, se utilizaron transistores de potencia mucho mas robustos y con alta capacidad de disipación de calor.
+
+    \item Parlante: Se utilizó un parlante para convertir la señal eléctrica amplificada en una señal sonora. La selección de un amplificador de potencia previo garantiza que el parlante reciba la corriente suficiente para producir un nivel de sonido adecuado para la aplicación.
+
+\end{itemize}
 \subsection{Gráficas}
 
 \begin{figure}[H]
