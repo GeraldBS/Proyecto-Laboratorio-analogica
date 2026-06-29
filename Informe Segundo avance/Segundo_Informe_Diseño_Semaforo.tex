@@ -92,6 +92,13 @@ Esta subsección describe el circuito encargado de controlar la lógica completa
 
 La FSM consta de cuatro estados codificados mediante dos bits, los cuales son almacenados en dos flip-flops JK CD4027 sincronizados por una señal de reloj generada con un temporizador 555. Cada estado representa una etapa específica del funcionamiento del semáforo peatonal y vehicular, permitiendo controlar tanto las luces como las señales sonoras del sistema.\\
 
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{Diagrama_de_FSM.jpeg}
+		\caption{Diagrama del flujo de la máquina de estado.}
+		\label{fsm1}
+	\end{figure}
+
 El estado inicial, $S_0$ ($00$), corresponde al estado de reposo del sistema. En esta condición permanecen encendidos el semáforo vehicular en verde y el semáforo peatonal en rojo, indicando el paso exclusivo para los vehículos. El sistema permanece en este estado hasta que se detecta la pulsación del botón peatonal, momento en el cual se realiza la transición hacia el estado $S_1$.\\
 
 El estado $S_1$ ($01$) tiene una duración de 5 segundos. Durante este intervalo el semáforo vehicular verde comienza a parpadear, advirtiendo a los conductores del cambio de estado. Finalizado este tiempo, la máquina de estados avanza automáticamente al estado $S_2$.\\
@@ -115,57 +122,21 @@ Los LED correspondientes a los semáforos son controlados mediante transistores 
 	
 \subsection{Justificación de diseño}
 
-\subsubsection{\textbf{Generador de reloj}}
-El generador de reloj se implementó utilizando el LM555CM en configuración astable debido a su simplicidad, estabilidad y facilidad para ajustar la frecuencia mediante componentes pasivos externos. Este circuito permite generar una señal cuadrada compatible con niveles TTL de 5 $V$, adecuada para excitar directamente el 74LS90, 74LS42 y el resto de la lógica digital.\\
-
-La frecuencia del reloj se ajustó aproximadamente a 5 Hz para que cada transición de estado representara un segundo real, simplificando así la implementación de los tiempos requeridos para el semáforo. El capacitor conectado al pin de control del LM555CM se incorporó para filtrar ruido y mejorar la estabilidad temporal del sistema.\\
-
-\subsubsection{\textbf{Máquina de estados principal}}
-La máquina de estados principal se diseñó utilizando un 74LS90 debido a que este dispositivo permite generar una secuencia de números binarios de manera ordenada y la 74LS42 ordena los estados sin necesidad de memorias adicionales o lógica secuencial compleja. Cada salida del contador representa directamente un estado específico del sistema, simplificando considerablemente la implementación física del semáforo.\\
-
-La asignación de estados se realizó de la siguiente manera:
+La implementación de la máquina de estados se realizó utilizando un clock debido a que este tipo de arquitectura permite controlar de forma ordenada la secuencia de eventos del semáforo, garantizando que cada transición ocurra únicamente cuando se cumplen las condiciones establecidas y evitando cambios indeseados en las salidas.
 
 \begin{itemize}
-    \item $O_0$: semáforo vehicular en verde fijo y peatonal en rojo. Este estado permanece activo indefinidamente hasta recibir una solicitud peatonal.
-    
-    \item $O_1$: corresponde al parpadeo del LED verde vehicular antes de realizar la transición a amarillo.
-    
-    \item $O_2$: activa el LED amarillo vehicular durante aproximadamente 5 segundos.
-    
-    \item $O_3$, $O_4$, $O_5$ y $O_6$: corresponden al estado peatonal habilitado, donde el semáforo vehicular permanece en rojo y el peatonal en verde, incluyendo el parpadeo final del LED peatonal.
-    
-    \item $O_7$: se conecta a una NAND para que el semáforo vuelva al verde, ya que el reinicio "casero" que ocurre en el 74LS90 dura aproximadamente 1.5 s en ser efectivo.
-    
-    \item $O_8$ y $O_9$: se conectan a una resistencia de un valor de 1 k$\Omega$, resistencias de 
+
+    \item Temporizador 555: Se seleccionó un temporizador 555 configurado en modo astable para generar la señal de reloj del sistema por su precisión para controlar las transiciones temporizadas de la máquina de estados.
+
+    \item Flip-flops JK CD4027: Se emplearon dos flip-flops JK debido a que con ellos es posible almacenar los dos bits que representan los cuatro estados de funcionamiento del sistema.
+
+    \item Lógica combinacional: La lógica combinacional se diseñó para generar tanto las ecuaciones de próximo estado como las señales de salida respectivas de cada estado. Esta implementación permite controlar de manera simultánea el encendido de los semáforos vehiculares y peatonales, la activación del sistema sonoro y las señales de control requeridas por el resto del circuito.
+
+    \item Contador CD4017: Se utilizó un contador decimal CD4017 para controlar la duración de cada estado mediante la generación de pulsos de reloj provenientes del temporizador 555. Las salidas del contador se emplean para habilitar las transiciones entre estados y sincronizar el funcionamiento de los displays de siete segmentos.
+
+    \item LEDs transistorizados: Aunque la lógica CMOS es capaz de suministrar corriente limitada, se utilizaron transistores BJT como interruptores para accionar los LED de los semáforos. Esto evita sobrecargar las salidas de los circuitos integrados y permite alimentar los indicadores directamente desde la fuente de 5V sin afectar el funcionamiento de la lógica digital.
+
 \end{itemize}
-
-Adicionalmente, el sistema incorpora un módulo de conteo regresivo sincronizado con la máquina de estados, permitiendo controlar la duración exacta de determinados estados del semáforo.\\
-
-El contador inicia automáticamente cuando la máquina entra al estado peatonal y comienza una secuencia regresiva desde 20 hasta 00. La señal de reloj utilizada por los contadores proviene del mismo generador de reloj de 1 Hz empleado en la FSM, garantizando sincronización temporal entre ambos sistemas.\
-
-La transición entre estados depende directamente de la finalización de ciertos intervalos de tiempo. Por ejemplo, el estado amarillo permanece activo durante aproximadamente 5 segundos, mientras que el estado peatonal utiliza el conteo regresivo para determinar el tiempo restante antes del retorno al estado inicial. 
-
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=1\textwidth]{Diagrama_de_FSM.png}
-		\caption{Diagrama del flujo de la máquina de estado.}
-		\label{fsm1}
-	\end{figure}
-
-\newpage
-
-\subsubsection{\textbf{Lógica de decodificación}}
-La lógica de decodificación se implementó mediante compuertas AND y OR debido a la necesidad de combinar múltiples estados del contador para generar las señales finales de control.\\
-
-Las compuertas 74LS32 y 74LS08 se utilizan para detectar combinaciones específicas de estados y habilitar determinadas transiciones o salidas. Por otro lado, las compuertas 74LS32 permiten unir varios estados del CD4017BP en una sola línea lógica para controlar un mismo LED durante múltiples intervalos de tiempo.\\
-
-
-\subsubsection{\textbf{Etapa de señalización visual}}
-La etapa visual se diseñó utilizando LEDs independientes para cada luz del semáforo vehicular y peatonal, permitiendo una representación clara del estado actual del sistema.\\
-
-Cada LED posee una resistencia limitadora de 330 $\Omega$, seleccionada para mantener una corriente segura de operación y evitar daños en los dispositivos. Esta configuración también garantiza un brillo uniforme y adecuado para visualización durante las pruebas del sistema.\\
-
-El uso de lógica discreta para controlar directamente los LEDs permite observar claramente la transición entre estados y facilita tanto la simulación como el diagnóstico del circuito durante la etapa de implementación física.
 
 \newpage
 
