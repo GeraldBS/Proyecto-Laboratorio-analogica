@@ -233,41 +233,75 @@ En esta sección se justifica la selección de los principales componentes utili
     \item Parlante: Se utilizó un parlante para convertir la señal eléctrica amplificada en una señal sonora. La selección de un amplificador de potencia previo garantiza que el parlante reciba la corriente suficiente para producir un nivel de sonido adecuado para la aplicación.
 
 \end{itemize}
-\subsection{Gráficas}
-
-\begin{figure}[H]
-    \centering
-    \begin{minipage}{0.45\textwidth}
-        \centering
-        \includegraphics[width=0.9\textwidth]{osc velocidad.png}
-		\caption{Señal de oscilación segun seleccion de velocidad.}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.45\textwidth}
-        \centering
-        \includegraphics[width=0.9\textwidth]{salida lento.png}
-		\caption{Ejemplo de tono de salida en modo lento.}
-    \end{minipage}
-
-\end{figure}
 
 \newpage
 	
-\section{\textbf{Montaje físico y observaciones experimentales}}
-Este apartado describe la construcción física del primer prototipo del circuito en protoboards. Contiene imágenes del montaje, los problemas experimentados durante el armado y los puntos clave observados durante las pruebas.
-\subsection{Fotografias del montaje}
-A continuación se muestran imágenes del montaje físico de cada circuito:
+\section{Implementación del circuito en protoboard}
+
+Una vez verificado el funcionamiento de cada uno de los módulos de forma individual, se procedió a la integración del sistema completo sobre protoboard. La implementación se realizó distribuyendo los bloques funcionales de manera independiente para facilitar el proceso de analisis e intgración. Cada módulo fue conectado a la fuente de alimentación correspondiente, asegurando que los niveles de tensión requeridos fueran suministrados de manera estable y confiable.
+
+\subsection{Integración del sistema}
+
+Una vez verificado el funcionamiento individual de cada uno de los módulos, se procedió a su integración para conformar el sistema completo. La FSM es el bloque central del circuito, ya que a partir de sus salidas se generan todas las señales de control necesarias para coordinar el funcionamiento del resto de los módulos.
+
+Las señales correspondientes a los estados de la FSM se distribuyen tanto al circuito de señalización visual como al circuito de generación de sonido. En el módulo de displays de siete segmentos, estas señales habilitan la carga y el funcionamiento de los contadores, permitiendo que el conteo regresivo este enlazado con el estado del cruce peatonal.
+
+De forma paralela, las señales PEATONAL_ROJO y ULTIMOS_5_SEG son enviadas al circuito de audio, donde controlan el multiplexor encargado de seleccionar la velocidad del tono audible. Posteriormente, la señal seleccionada se combina con el tono de 1kHz y es enviada a la etapa amplificadora, la cual suministra la potencia necesaria para el parlante.
+
+Asimismo, las salidas de la máquina de estados controlan mediante logica combinacional las etapas de conmutación de los LED correspondientes a los semáforos.
+
+Todos los módulos comparten una referencia común de tierra y la lógica del sistema, incluyendo los circuitos integrados CMOS, TTL, los displays y los LED, opera con una alimentación de 5V, mientras que la etapa de potencia del amplificador utiliza una fuente independiente de 12V.
+
+\subsection{Montaje del protoboard}
+
+La Figura~\ref{fig:protoboard_general} muestra el montaje final del sistema sobre protoboard. La distribución de los módulos se realizó de forma que facilitara tanto la interconexión entre ellos como las labores de prueba y depuración durante la etapa de implementación.
+
+En el extremo derecho del montaje se ubica la fuente de alimentación, desde donde se distribuyen los niveles de tensión requeridos por los diferentes módulos del sistema. En la región central se implementó la máquina de estados finitos junto con la lógica de control, la cual constituye el núcleo del proyecto al generar las señales que coordinan el funcionamiento del resto de los bloques.
+
+En la parte inferior del protoboard se localiza el módulo de señalización visual, conformado por los contadores, los decodificadores y los displays de siete segmentos encargados de mostrar el tiempo restante del cruce peatonal. Finalmente, en el lado izquierdo se encuentra el circuito de generación y amplificación de audio, incluyendo la lógica de selección de la cadencia del tono, el generador de la señal audible y la etapa amplificadora encargada de alimentar el parlante.
 
 \begin{figure}[H]
-	\centering
-	\includegraphics[width=0.3\textwidth,angle=90]{alimentacionfoto.jpeg}
-	\caption{Circuito alimentacion en protoboard}
-	\label{fig:alimentacionfoto}
+    \centering {0.45\textwidth}
+        \centering
+        \includegraphics[width=0.9\textwidth]{circ proto.jpeg}
+		\caption{Circuito completo implementado en protoboard.}
+		\label{fig:protoboard_general}
+
 \end{figure}
 
-\subsection{Problemas encontrados}
-Desde las primeras pruebas del prototipo completo, surgieron dificultades al integrar todos los módulos y ponerlos
-a funcionar en conjunto.
+
+
+\section{Diseño de la PCB}
+
+Con el objetivo de introducir el proceso de diseño PCBs, se decidió implementar la fuente de alimentación del sistema sobre una placa independiente. Este módulo fue seleccionado debido a su menor complejidad en comparación con el resto de sistemas, permitiendo familiarizarse con las herramientas de diseño.
+
+Durante el diseño se buscó obtener una distribución compacta de los componentes, procurando aprovechar el área disponible sin generar un montaje excesivamente denso que dificultara el diseño. Asimismo, se mantuvo una separación adecuada entre los componentes para facilitar tanto la soldadura.
+
+Para simplificar la conexión de la fuente con el resto del sistema, se incorporaron borneras de dos terminales tanto en la entrada como en la salida de la placa. Estas permiten realizar las conexiones con cables mas comodamente.
+
+El enrutamiento de las pistas se realizó procurando minimizar cruces innecesarios y mantener recorridos lo más cortos posible, contribuyendo a un diseño ordenado y de fácil fabricación. La Figura~\ref{fig:pcb_fuente} muestra el diseño final de la tarjeta de circuito impreso desarrollada para la fuente de alimentación y la incorporacion en fisico de la placa pcb.
+
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{pcb.jpeg}
+        \caption{Vista superior de la PCB.}
+        \label{fig:pcb_top}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{pcb_cad.png}
+        \caption{Diseno de la PCB en software.}
+        \label{fig:pcb_3d}
+    \end{subfigure}
+
+    \caption{PCB de la fuente de alimentación.}
+    \label{fig:pcb_fuente}
+\end{figure}
 
 \section{\textbf{Conclusiones}}
 Se logró comprobar que es completamente viable diseñar un sistema de semáforo vehicular y peatonal complejo utilizando únicamente electrónica básica y componentes discretos, cumpliendo con las especificaciones de diseño sin depender de microcontroladores programables. Esto nos ayudó a entender mejor cómo coordinar la lógica digital con bloques de potencia y control en una aplicación del mundo real.
