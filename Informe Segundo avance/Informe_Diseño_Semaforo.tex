@@ -11,6 +11,7 @@
 \usepackage{graphicx}
 \usepackage{array}
 \usepackage{float}
+\usepackage{url}
 \usepackage{capt-of}
 \usepackage{hyperref}
 \newcolumntype{C}{>{\centering\arraybackslash}X}
@@ -42,7 +43,8 @@
 \maketitle
 	
 \begin{abstract}
-		Se propone el diseño de un sistema de semáforo vehicular y peatonal, cuyo objetivo principal es simular un cruce vehicular completo mediante la gestión del flujo de tránsito y la interacción a través de solicitudes peatonales. El sistema incorpora señalización visual (rojo, amarillo, verde) y auditiva, control de tiempos regresivos mediante displays, y una etapa de conversión de energía de corriente alterna (CA) a corriente directa (CD). En este primer avance, se documenta exclusivamente la etapa de alimentación del circuito, la cual es responsable de proveer los niveles de tensión regulados adecuados para el funcionamiento de las etapas analógicas y digitales posteriores.
+		Se presenta el diseño e implementación de un sistema de semáforo vehicular y peatonal, cuyo objetivo principal es simular un cruce vehicular completo mediante la gestión del flujo de tránsito y la interacción a través de solicitudes peatonales. El sistema incorpora señalización visual (rojo, amarillo,
+verde) y auditiva, control de tiempos regresivos mediante displays, y una etapa de conversión de energía de corriente alterna (CA) a corriente directa (CD). En este segundo informe, se documentan todas las etapas del sistema: la fuente de alimentación, la máquina de estados finitos, el módulo de display de siete segmentos, el sistema de señalización auditiva, la integración sobre protoboard y el diseño de la PCB para la etapa de alimentación.
 \end{abstract}
 	
 \section{Introducción}
@@ -88,84 +90,59 @@
 
 \section{\textbf{Máquina de estados}}
 \subsection{Descripción}
-Esta subsección describe el circuito encargado de controlar la lógica completa del semáforo vehicular y peatonal, incluyendo la generación de estados, temporización, control de transición y activación de las señales luminosas. El circuito implementa una máquina de estados síncrona basada en lógica digital discreta, utilizando compuertas lógicas, contadores y temporizadores, cumpliendo con las especificaciones establecidas para el proyecto de semáforo vehicular y peatonal.\\
-
-Para facilitar el análisis del sistema, el circuito se divide en cuatro bloques funcionales principales: el generador de reloj, la máquina de estados principal, la lógica de decodificación y control, y la etapa de señalización visual del semáforo.\\
-
-El generador de reloj se implementa mediante un 555 configurado en modo astable, el cual produce una señal cuadrada periódica utilizada como señal de sincronización del sistema.\\
-
-La máquina de estados principal se implementa utilizando un contador CD4017BP, el cual activa secuencialmente sus salidas $Q_0$ a $Q_9$ con cada flanco positivo de reloj. Cada salida representa un estado específico del sistema de semáforo. La secuencia inicia en $Q_0$, donde el semáforo vehicular permanece en verde y el peatonal en rojo hasta que el usuario presione el botón peatonal. Una vez recibido el pulso del botón, el sistema comienza la secuencia automática de transición.\\
-
-Las señales provenientes de las salidas del CD4017BP son procesadas mediante compuertas lógicas 74LS08 (AND), 74LS32 (OR) y 74LS14 (Schmitt Trigger Inverter). Estas compuertas permiten combinar múltiples estados para generar correctamente las señales de control de los LEDs vehiculares y peatonales. Además, la compuerta Schmitt Trigger se utiliza para limpiar y estabilizar las transiciones provenientes del contador y evitar problemas asociados al ruido o a señales intermedias.\\
-
-La etapa de señalización visual está conformada por LEDs indicadores correspondientes al semáforo vehicular y peatonal. Cada LED cuenta con una resistencia limitadora para proteger los dispositivos ante sobrecorriente. El semáforo vehicular utiliza LEDs rojo, amarillo y verde, mientras que el sistema peatonal utiliza LEDs rojo y verde. La activación de cada LED depende directamente de la lógica generada por las compuertas asociadas a los distintos estados de la máquina.\\
-
-El funcionamiento general del sistema consiste en mantener el semáforo vehicular en verde hasta recibir una solicitud peatonal. Posteriormente, el sistema realiza una secuencia de parpadeo del verde vehicular, cambia a amarillo durante un intervalo fijo y finalmente habilita el paso peatonal mediante el LED verde peatonal y el LED rojo vehicular. Finalizada la secuencia, el contador se reinicia automáticamente y el sistema vuelve al estado inicial.
+Esta subsección describe el circuito encargado de controlar la lógica completa del semáforo vehicular y peatonal, incluyendo la generación de estados, temporización, control de transición y activación de las señales luminosas. El circuito implementa una máquina de estados síncrona basada en lógica digital discreta, utilizando compuertas lógicas, contadores y temporizadores,
+cumpliendo con las especificaciones establecidas para el proyecto de semáforo vehicular y peatonal.
+La FSM consta de cuatro estados codificados mediante dos bits, los cuales son almacenados en dos flip-flops JK CD4027 sincronizados por una señal de reloj generada con un temporizador 555. Cada estado representa una etapa específica del funcionamiento del semáforo peatonal y vehicular, permitiendo controlar tanto las luces como las señales sonoras del sistema.
  \\
 
-\subsection{Diagrama del circuito}
+\subsection{Diagrama de la FSM}
 	% Descomente y ajuste el nombre de la imagen:
 	
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.7\textwidth]{Diagrama_Multisim_FSM.jpg}
-		\caption{Diagrama del circuito de la FSM con los leds en el software Multisim.}
+		\includegraphics[width=0.6\textwidth]{Diagrama_de_FSM.jpeg}
+		\caption{Diagrama del flujo de la máquina de estados.}
+		\label{_diagrama_fsm}
+	\end{figure}
+
+El estado inicial del sistema es $S_0 (00)$. En este estado el semáforo vehicular permanece en verde fijo, mientras que el semáforo peatonal se mantiene en rojo. Esta condición representa el funcionamiento normal del cruce cuando no existe una solicitud peatonal. La máquina permanece indefinidamente en $S_0$ hasta que se presiona el botón peatonal. Al detectarse esta solicitud, el circuito fuerza la transición hacia $S_1$, iniciando la secuencia de cambio de luces.\\
+
+En $S_1 (01)$, el verde vehicular comienza a parpadear durante 5 segundos. Esta etapa cumple la función de advertir a los conductores que el paso vehicular está próximo a finalizar. Durante este estado, el semáforo peatonal continúa en rojo, por lo que el peatón aún no tiene permitido cruzar.\\
+
+Luego, la FSM avanza hacia $S_2 (10)$, donde se enciende el amarillo vehicular de forma fija durante 5 segundos. Este estado funciona como etapa de transición entre el paso vehicular y el paso peatonal, permitiendo que los vehículos despejen la intersección antes de que se active el rojo vehicular.\\
+
+Posteriormente, el sistema entra en $S_3 (11)$. En este estado se apaga el verde y el amarillo vehicular, se enciende el rojo vehicular y se habilita el verde peatonal. La duración total de $S_3$ es de 25 segundos. Durante los primeros 20 segundos, el verde peatonal permanece encendido de forma fija, indicando que el cruce está permitido. Durante los últimos 5 segundos, el verde peatonal comienza a parpadear, advirtiendo al peatón que el tiempo de cruce está por finalizar. Al cumplirse el tiempo total de $S_3$, la máquina retorna automáticamente al estado $S_0$.\\
+
+Para controlar la temporización de $S_3$ se emplea un contador CD4017. Este contador permite dividir el estado peatonal en intervalos de 5 segundos. La señal L5 se toma de la salida Q4 del CD4017, ya que esta salida se activa durante los últimos 5 segundos del estado $S_3$. Por lo tanto, L5 se utiliza para dos funciones principales: activar el parpadeo del verde peatonal en la etapa final del cruce y permitir el retorno de la máquina al estado S0 una vez concluido el tiempo peatonal.\\
+
+Además, el circuito utiliza una señal de parpadeo denominada BLINK, generada mediante una señal de reloj de 1 Hz. Esta señal se combina con la lógica de estados para hacer parpadear el verde vehicular durante S1 y el verde peatonal durante los últimos 5 segundos de $S_3$.\\
+
+\subsection{Diagrama de la FSM}
+	% Descomente y ajuste el nombre de la imagen:
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{Diagrama_Multisim_FSM.jpg}
+		\caption{Diagrama del flujo de la máquina de estados.}
 		\label{fsm1}
 	\end{figure}
-	
 	
 	
 \subsection{Justificación de diseño}
 
-\subsubsection{\textbf{Generador de reloj}}
-El generador de reloj se implementó utilizando el LM555CM en configuración astable debido a su simplicidad, estabilidad y facilidad para ajustar la frecuencia mediante componentes pasivos externos. Este circuito permite generar una señal cuadrada compatible con niveles TTL de 5 $V$, adecuada para excitar directamente el CD4017BP y el resto de la lógica digital.\\
-
-La frecuencia del reloj se ajustó aproximadamente a 1 Hz para que cada transición de estado representara un segundo real, simplificando así la implementación de los tiempos requeridos para el semáforo. El capacitor conectado al pin de control del LM555CM se incorporó para filtrar ruido y mejorar la estabilidad temporal del sistema.\\
-
-\subsubsection{\textbf{Máquina de estados principal}}
-La máquina de estados principal se diseñó utilizando un CD4017BP debido a que este dispositivo permite generar una secuencia ordenada de estados sin necesidad de memorias adicionales o lógica secuencial compleja. Cada salida del contador representa directamente un estado específico del sistema, simplificando considerablemente la implementación física del semáforo.\\
-
-La asignación de estados se realizó de la siguiente manera:
+La implementación de la máquina de estados se realizó utilizando un \textit{clock}, debido a que este tipo de arquitectura permite controlar de forma ordenada la secuencia de eventos del semáforo, garantizando que cada transición ocurra únicamente cuando se cumplen las condiciones establecidas y evitando cambios indeseados en las salidas.
 
 \begin{itemize}
-    \item $Q_0$: semáforo vehicular en verde fijo y peatonal en rojo. Este estado permanece activo indefinidamente hasta recibir una solicitud peatonal.
-    
-    \item $Q_1$, $Q_2$ y $Q_3$: corresponden al parpadeo del LED verde vehicular antes de realizar la transición a amarillo.
-    
-    \item $Q_4$: activa el LED amarillo vehicular durante aproximadamente 5 segundos.
-    
-    \item $Q_5$, $Q_6$, $Q_7$ y $Q_8$: corresponden al estado peatonal habilitado, donde el semáforo vehicular permanece en rojo y el peatonal en verde, incluyendo el parpadeo final del LED peatonal.
-    
-    \item $Q_9$: se utiliza para reiniciar automáticamente el CD4017BP mediante el pin RESET, retornando el sistema al estado inicial.
+    \item \textbf{Temporizador 555:} Se seleccionó un temporizador 555 configurado en modo astable para generar la señal de reloj del sistema, debido a su precisión para controlar las transiciones temporizadas de la máquina de estados.\\
+
+    \item \textbf{Flip-flops JK CD4027:} Se emplearon dos flip-flops JK debido a que con ellos es posible almacenar los dos bits que representan los cuatro estados de funcionamiento del sistema.\\
+
+    \item \textbf{Lógica combinacional:} La lógica combinacional se diseñó para generar tanto las ecuaciones de próximo estado como las señales de salida respectivas de cada estado. Esta implementación permite controlar de manera simultánea el encendido de los semáforos vehiculares y peatonales, la activación del sistema sonoro y las señales de control requeridas por el resto del circuito.\\
+
+    \item \textbf{Contador CD4017:} Se utilizó un contador decimal CD4017 para controlar la duración de cada estado mediante la generación de pulsos de reloj provenientes del temporizador 555. Las salidas del contador se emplean para habilitar las transiciones entre estados y sincronizar el funcionamiento de los displays de siete segmentos.\\
+
+    \item \textbf{LEDs transistorizados:} Aunque la lógica CMOS es capaz de suministrar corriente limitada, se utilizaron transistores BJT como interruptores para accionar los LED de los semáforos. Esto evita sobrecargar las salidas de los circuitos integrados y permite alimentar los indicadores directamente desde la fuente de $5\,\mathrm{V}$ sin afectar el funcionamiento de la lógica digital.\\
 \end{itemize}
-
-Adicionalmente, el sistema incorpora un módulo de conteo regresivo sincronizado con la máquina de estados, permitiendo controlar la duración exacta de determinados estados del semáforo.\\
-
-El contador inicia automáticamente cuando la máquina entra al estado peatonal y comienza una secuencia regresiva desde 20 hasta 00. La señal de reloj utilizada por los contadores proviene del mismo generador de reloj de 1 Hz empleado en la FSM, garantizando sincronización temporal entre ambos sistemas.\
-
-La transición entre estados depende directamente de la finalización de ciertos intervalos de tiempo. Por ejemplo, el estado amarillo permanece activo durante aproximadamente 5 segundos, mientras que el estado peatonal utiliza el conteo regresivo para determinar el tiempo restante antes del retorno al estado inicial. 
-
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=1\textwidth]{Diagrama_de_FSM.png}
-		\caption{Diagrama del flujo de la máquina de estado.}
-		\label{fsm1}
-	\end{figure}
-
-\newpage
-
-\subsubsection{\textbf{Lógica de decodificación}}
-La lógica de decodificación se implementó mediante compuertas AND y OR debido a la necesidad de combinar múltiples estados del contador para generar las señales finales de control.\\
-
-Las compuertas 74LS32 y 74LS08 se utilizan para detectar combinaciones específicas de estados y habilitar determinadas transiciones o salidas. Por otro lado, las compuertas 74LS32 permiten unir varios estados del CD4017BP en una sola línea lógica para controlar un mismo LED durante múltiples intervalos de tiempo.\\
-
-
-\subsubsection{\textbf{Etapa de señalización visual}}
-La etapa visual se diseñó utilizando LEDs independientes para cada luz del semáforo vehicular y peatonal, permitiendo una representación clara del estado actual del sistema.\\
-
-Cada LED posee una resistencia limitadora de 330 $\Omega$, seleccionada para mantener una corriente segura de operación y evitar daños en los dispositivos. Esta configuración también garantiza un brillo uniforme y adecuado para visualización durante las pruebas del sistema.\\
-
-El uso de lógica discreta para controlar directamente los LEDs permite observar claramente la transición entre estados y facilita tanto la simulación como el diagnóstico del circuito durante la etapa de implementación física.
 
 \newpage
 
@@ -185,7 +162,7 @@ El módulo fue configurado para iniciar el conteo en 20 segundos, disminuyendo p
 	
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.9\textwidth]{Diagrama_Multisim_Display.jpg}
+		\includegraphics[width=0.9\textwidth]{Diagrama_Multisim_Display.png}
 		\caption{Diagrama del circuito del Display de 7-segmentos en el software Multisim.}
 		\label{diag_circuito_display}
 	\end{figure}
@@ -213,11 +190,13 @@ Finalmente, de esta manera se puede verificar individualmente que este bloque se
 \section{\textbf{Sistema de Señalización Auditiva}}
 
 \subsection{Descripción}
-Este sistema fue diseñado con el propósito de generar una señal auditiva para los peatones cuando este permitido cruzar la calle. Consiste en generar un sonido periódico cuando el semáforo peatonal se encuentre en verde y que este mismo se acelera una vez que falten cinco segundos para que se vuelva a poner en rojo. \\
 
-Tomando en cuenta las especificaciones solicitadas cumpliendo únicamente con el uso de electrónica básica y sin ningún tipo de microcontroladores, se llego a la conclusión que la mejor forma de manejarlo era por medio de osciladores RC con la que se pueden ajustar la frecuencias y compuertas Schmitt Trigger acompañadas de un amplificador para el sonido de salida.\\
+Este sistema fue diseñado con el propósito de generar una señal auditiva para los peatones cuando esté permitido cruzar la calle. Consiste en generar un sonido periódico cuando el semáforo peatonal se encuentre en verde, y que este mismo se acelere una vez que falten cinco segundos para que vuelva a ponerse en rojo.\\
 
-Dado estos requerimientos se pude decir que el sistema completo se divide en cuatro bloques funcionales principales:
+Tomando en cuenta las especificaciones solicitadas, cumpliendo únicamente con el uso de electrónica básica y sin ningún tipo de microcontroladores, se llegó a la conclusión de que la mejor forma de manejarlo era por medio de osciladores astables con circuitos integrados 555, los cuales permiten ajustar la frecuencia deseada mediante resistencias y capacitores.\\
+
+Dados estos requerimientos, el sistema completo se divide en los siguientes bloques funcionales principales:
+
 \begin{enumerate}
     \item Generación del tono audible.
     \item Generación de la frecuencia de repetición lenta.
@@ -225,14 +204,11 @@ Dado estos requerimientos se pude decir que el sistema completo se divide en cua
     \item Etapa de selección y amplificación de potencia.
 \end{enumerate}
 
-En cuanto al funcionamiento del circuito, todo empieza generando una señal de una frecuencia audible (en este caso unos 2kHz aproximadamente) por medio de un oscilador principal. Se selecciona esta frecuencia ya que se encuentra dentro del rango perceptible por el oído humano siendo perceptible fácilmente.
-Adicional a esto, se generan además dos osciladores mas de aproximadamente 1Hz y 5Hz sujetos a modificaciones según las pruebas del circuito ensamblado en físico.\\
+En cuanto al funcionamiento del circuito, todo inicia con la generación de tres señales cuadradas mediante temporizadores 555 configurados como osciladores astables. La primera corresponde al tono audible, con una frecuencia aproximada de $1\,\mathrm{kHz}$, seleccionada por encontrarse dentro del rango de mayor sensibilidad del oído humano y, por tanto, ser fácilmente perceptible. Adicionalmente, se generan dos señales de aproximadamente $1\,\mathrm{Hz}$ y $2\,\mathrm{Hz}$, las cuales se emplean para producir las velocidades de repetición lenta y rápida del tono, respectivamente.\\
 
-Estas señales no funcionan como audio directamente, sino que al combinarse lógicamente generan periodos de activación de la señal de tono según la velocidad que sea deseada y dependiendo directamente del estado del semáforo peatonal.\\
+Posteriormente, la selección de la velocidad y la habilitación del sonido se realizan mediante un multiplexor (MUX). Este recibe como señales de control las salidas provenientes de la máquina de estados, específicamente las señales \texttt{PEATONAL\_ROJO} y \texttt{ULTIMOS\_5\_SEG}. Dependiendo de la combinación de estas entradas, el multiplexor selecciona una de las tres posibles salidas: ausencia de sonido, repetición lenta ($1\,\mathrm{Hz}$) o repetición rápida ($2\,\mathrm{Hz}$). De esta manera, se concentra en un único bloque la lógica necesaria para determinar el comportamiento del sistema de audio según el estado del semáforo. La señal de salida habilitada por el multiplexor se combina finalmente mediante una compuerta AND con el tono audible de $1\,\mathrm{kHz}$.\\
 
-Dependiendo del estado en el que se encuentre el semáforo y ligado a la parte de la maquina de estados se generan posteriormente dos compuertas AND con las que se selecciona la velocidad del tono que se desea en cierto momento admitiendo como entradas para cada una la señal rápida o lenta y una señal que se puede interpretar como los 'últimos 5s'. Mediante esto, solo una de las señales debería estar activa en un momento determinada, pero por medidas de seguridad, se implementa entra las salidas de ambas una compuerta OR con las que se asegura que en ningún momento se activen ambas señales produciendo bugs. A la salida de esta compuerta se adiciona nuevamente un AND para así tener la suma del selector de velocidad y el tono audible y que se esta manera suene la bocina cuando la señal de velocidad deseada esta activa.\\
-
-Finalmente, se toma la señal resultante y se pasa por una etapa amplificadora con un transistor NPN en configuración de conmutación ya que no es necesario utilizar un amplificado líneal mas complicado porque se tienen como salida ya una señal cuadrada.\\
+Para la etapa de amplificación, dado que la lógica digital entrega una amplitud de $5\,\mathrm{V}$ pero con una capacidad de corriente baja para el uso requerido, se implementa inicialmente un divisor de tensión para adaptar el nivel de entrada del amplificador. Posteriormente, la señal atraviesa un amplificador de dos etapas: una primera etapa de ganancia de voltaje basada en un transistor en configuración de emisor común y una segunda etapa de potencia tipo \textit{push-pull} clase AB, ambas alimentadas con una fuente de $12\,\mathrm{V}$. Esta configuración proporciona tanto la ganancia de tensión como la capacidad de corriente necesarias para accionar el parlante de forma adecuada, garantizando un nivel de sonido adecuado para la aplicación.\\
 
 \subsection{Diagrama del circuito}
 
@@ -244,111 +220,232 @@ Finalmente, se toma la señal resultante y se pasa por una etapa amplificadora c
 	\end{figure}
 
 \subsection{Justificación de Diseño}
+
+En esta sección se justifica la selección de los principales componentes utilizados en la implementación del circuito de generación y amplificación del tono audible.\\
+
 \begin{itemize}
-	\item{Compuerta Schmitt Trigger 74LS14}
-		Se selecciono un circuito integrado 74LS14 por la necesidad de generar señales cuadradas de un voltaje en corriente continua. Permite se manera sencilla implementar osciladores RC con bastante estabilidad evitando problemas de ruido y transiciones. Ademas, permite la generación de varios osciladores con un mismo circuito conectando una entrada y salida mediante una resistencia y un capacitor entre la entrada y tierra. Esto genera que conforme los valores elegidos de cada componente y según la carga o descarga del capacitor se genere de manera simple una señal cuadrada.\\
-		
-	\item{Compuertas AND/OR}
-		Permiten procesar la lógica necesaria para que no haya bugs en el sistema. Permiten una selección de velocidad de pitidos y una mezcla de estos con la señal audible.\\
-		
-	\item{Transistor NPN}
-		El transistor NPN fue seleccionado debido a que las compuertas lógicas no son capaces de suministrar la corriente necesaria para alimentar directamente el parlante. El transistor añade corriente y por ende potencia entre la lógica digital y logra que la carga de salida sea audible más fácilmente.
-		Como beneficio adicional, esta configuración protege las compuertas lógicas contra sobrecorrientes y permite utilizar una fuente de alimentación de mayor voltaje para aumentar el volumen del sonido emitido.\\
-		
-	\item{Resistencia de Base}
-		La resistencia conectada a la base del transistor limita la corriente de entrada, evitando daños tanto en la salida lógica como en el transistor. Este componente resulta fundamental para garantizar una operación segura del sistema.\\
-		
-	\item{Parlante}
-		Se utilizó un parlante de baja impedancia como dispositivo de salida debido a su simplicidad y facilidad de integración. El uso de ondas cuadradas permite generar tonos audibles claramente distinguibles sin necesidad de circuitos de audio complejos.
+    \item \textbf{Temporizadores 555:} Se emplearon tres temporizadores 555 configurados en modo astable debido a su simplicidad y estabilidad para generar señales cuadradas. Un primer temporizador produce el tono audible de aproximadamente $1\,\mathrm{kHz}$, mientras que los otros dos generan las frecuencias de repetición de $1\,\mathrm{Hz}$ y $2\,\mathrm{Hz}$, correspondientes a las velocidades lenta y rápida requeridas. Además, estos circuitos integrados permiten ajustar fácilmente la frecuencia mediante la selección de resistencias y capacitores.\\
+
+    \item \textbf{Multiplexor:} Se seleccionó un multiplexor como bloque de decisión debido a que simplifica considerablemente la lógica de selección de la señal de salida. A partir de las señales de control \texttt{PEATONAL\_ROJO} y \texttt{ULTIMOS\_5\_SEG}, el MUX determina automáticamente si la salida debe permanecer deshabilitada o si debe haber una repetición lenta o rápida. Esta solución reduce la cantidad de compuertas lógicas necesarias.\\
+
+    \item \textbf{Compuerta AND:} La salida del multiplexor se combina mediante una compuerta AND con la señal de $1\,\mathrm{kHz}$. De esta manera, el tono audible únicamente está presente cuando la señal de habilitación seleccionada por el MUX se encuentra activa.\\
+
+    \item \textbf{Divisor de tensión:} Antes de la etapa de amplificación se implementó un divisor de tensión para adaptar el nivel de la señal proveniente de la lógica digital al valor requerido por la etapa amplificadora. Esto permite establecer un punto de operación adecuado para el transistor de entrada.\\
+
+    \item \textbf{Amplificador en emisor común:} La primera etapa de amplificación corresponde a un amplificador de voltaje con transistor BJT en configuración de emisor común. Esta topología fue elegida por su elevada ganancia de voltaje y su facilidad de diseño.\\
+
+    \item \textbf{Etapa \textit{push-pull} clase AB:} Como etapa final se implementó un amplificador de potencia \textit{push-pull} clase AB alimentado con $12\,\mathrm{V}$. Esta configuración proporciona la corriente necesaria para activar adecuadamente el parlante. Se debe tomar en cuenta que, por la corriente manejada, se utilizaron transistores de potencia mucho más robustos y con alta capacidad de disipación de calor.\\
+
+    \item \textbf{Parlante:} Se utilizó un parlante para convertir la señal eléctrica amplificada en una señal sonora. La selección de un amplificador de potencia previo garantiza que el parlante reciba la corriente suficiente para producir un nivel de sonido adecuado para la aplicación.\\
 \end{itemize}
-
-\subsection{Gráficas}
-
-\begin{figure}[H]
-    \centering
-    \begin{minipage}{0.45\textwidth}
-        \centering
-        \includegraphics[width=0.9\textwidth]{osc velocidad.png}
-		\caption{Señal de oscilación segun seleccion de velocidad.}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.45\textwidth}
-        \centering
-        \includegraphics[width=0.9\textwidth]{salida lento.png}
-		\caption{Ejemplo de tono de salida en modo lento.}
-    \end{minipage}
-
-\end{figure}
 
 \newpage
 	
-\section{\textbf{Montaje físico y observaciones experimentales}}
-Este apartado describe la construcción física del primer prototipo del circuito en protoboards. Contiene imágenes del montaje, los problemas experimentados durante el armado y los puntos clave observados durante las pruebas.
-\subsection{Fotografias del montaje}
-A continuación se muestran imágenes del montaje físico de cada circuito:
+\section{Implementación del circuito en protoboard}
+
+Una vez verificado el funcionamiento de cada uno de los módulos de forma individual, se procedió a la integración del sistema completo sobre protoboard. La implementación se realizó distribuyendo los bloques funcionales de manera independiente para facilitar el proceso de análisis e integración. Cada módulo fue conectado a la fuente de alimentación correspondiente, asegurando que los niveles de tensión requeridos fueran suministrados de manera estable y confiable.
+
+\subsection{Integración del sistema}
+
+Una vez verificado el funcionamiento individual de cada uno de los módulos, se procedió a su integración para conformar el sistema completo. La FSM es el bloque central del circuito, ya que a partir de sus salidas se generan todas las señales de control necesarias para coordinar el funcionamiento del resto de los módulos.
+
+Las señales correspondientes a los estados de la FSM se distribuyen tanto al circuito de señalización visual como al circuito de generación de sonido. En el módulo de displays de siete segmentos, estas señales habilitan la carga y el funcionamiento de los contadores, permitiendo que el conteo regresivo esté enlazado con el estado del cruce peatonal.
+
+De forma paralela, las señales \texttt{PEATONAL\_ROJO} y \texttt{ULTIMOS\_5\_SEG} son enviadas al circuito de audio, donde controlan el multiplexor encargado de seleccionar la velocidad del tono audible. Posteriormente, la señal seleccionada se combina con el tono de $1\,\mathrm{kHz}$ y es enviada a la etapa amplificadora, la cual suministra la potencia necesaria para el parlante.
+
+Asimismo, las salidas de la máquina de estados controlan mediante lógica combinacional las etapas de conmutación de los LED correspondientes a los semáforos.
+
+Todos los módulos comparten una referencia común de tierra y la lógica del sistema, incluyendo los circuitos integrados CMOS, TTL, los displays y los LED, opera con una alimentación de $5\,\mathrm{V}$, mientras que la etapa de potencia del amplificador utiliza una fuente independiente de $12\,\mathrm{V}$.
+
+\subsection{Montaje del protoboard}
+
+La Figura~\ref{fig:montaje-protoboard} muestra el montaje final del sistema sobre protoboard. La distribución de los módulos se realizó de forma que facilitara tanto la interconexión entre ellos como las labores de prueba y depuración durante la etapa de implementación.
+
+En el extremo derecho del montaje se ubica la fuente de alimentación, desde donde se distribuyen los niveles de tensión requeridos por los diferentes módulos del sistema. En la región central se implementó la máquina de estados finitos junto con la lógica de control, la cual constituye el núcleo del proyecto al generar las señales que coordinan el funcionamiento del resto de los bloques.
+
+En la parte inferior del protoboard se localiza el módulo de señalización visual, conformado por los contadores, los decodificadores y los displays de siete segmentos encargados de mostrar el tiempo restante del cruce peatonal. Finalmente, en el lado izquierdo se encuentra el circuito de generación y amplificación de audio, incluyendo la lógica de selección de la cadencia del tono, el generador de la señal audible y la etapa amplificadora encargada de alimentar el parlante.
 
 \begin{figure}[H]
-	\centering
-	\includegraphics[width=0.3\textwidth,angle=90]{alimentacionfoto.jpeg}
-	\caption{Circuito alimentacion en protoboard}
-	\label{fig:alimentacionfoto}
+    \centering
+    \includegraphics[width=0.9\linewidth]{circ proto.jpeg}
+    \caption{Circuito completo implementado en protoboard.}
+    \label{fig:montaje-protoboard}
 \end{figure}
 
-\subsection{Problemas encontrados}
-Desde las primeras pruebas del prototipo completo, surgieron dificultades al integrar todos los módulos y ponerlos
-a funcionar en conjunto.
+\newpage
 
-\section{\textbf{Conclusiones}}
-Se logró comprobar que es completamente viable diseñar un sistema de semáforo vehicular y peatonal complejo utilizando únicamente electrónica básica y componentes discretos, cumpliendo con las especificaciones de diseño sin depender de microcontroladores programables. Esto nos ayudó a entender mejor cómo coordinar la lógica digital con bloques de potencia y control en una aplicación del mundo real.
-Se verificó que el circuito de potencia cumple con reducir y rectificar de manera segura los 120 $V_{rms}$ de la red eléctrica para entregar salidas fijas y reguladas de 5 V y 12 V. Durante el diseño, se evidenció que la correcta selección de los capacitores de filtro y desacople es vital para eliminar el rizado y absorber el ruido transitorio provocado por los constantes cambios de estado lógicos.	
-	
-\begin{thebibliography}{99}
-\bibitem{Floyd}
+\section{Diseño de la PCB}
+
+Con el objetivo de introducir el proceso de diseño PCBs, se decidió implementar la fuente de alimentación del sistema sobre una placa independiente. Este módulo fue seleccionado debido a su menor complejidad en comparación con el resto de sistemas, permitiendo familiarizarse con las herramientas de diseño.\\
+
+Durante el diseño se buscó obtener una distribución compacta de los componentes, procurando aprovechar el área disponible sin generar un montaje excesivamente denso que dificultara el diseño. Asimismo, se mantuvo una separación adecuada entre los componentes para facilitar tanto la soldadura.\\
+
+Para simplificar la conexión de la fuente con el resto del sistema, se incorporaron borneras de dos terminales tanto en la entrada como en la salida de la placa. Estas permiten realizar las conexiones con cables más cómodamente.\\
+
+El enrutamiento de las pistas se realizó procurando minimizar cruces innecesarios y mantener recorridos lo más cortos posible, contribuyendo a un diseño ordenado y de fácil fabricación.\\
+
+La Figura~\ref{fig:pcb-fuente} muestra el diseño final de la tarjeta de circuito impreso desarrollada para la fuente de alimentación y la incorporación en físico de la placa PCB.\\
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{pcb.jpeg}
+        \caption{Vista superior de la PCB.}
+        \label{fig:pcb-fisica}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{pcb_cad.png}
+        \caption{Diseño de la PCB en software.}
+        \label{fig:pcb-software}
+    \end{subfigure}
+
+    \caption{PCB de la fuente de alimentación.}
+    \label{fig:pcb-fuente}
+\end{figure}
+
+\newpage
+
+\section{Implementación de la maqueta}
+
+Como complemento al desarrollo electrónico del sistema, se elaboró una maqueta física con el propósito de representar de forma visual el funcionamiento del semáforo vehicular y peatonal. Esta maqueta permite observar la aplicación del circuito en un entorno similar a un cruce real, integrando la señalización vehicular, la señalización peatonal, el botón de solicitud de cruce, los displays de conteo regresivo y el sistema de alerta auditiva.\\
+
+La maqueta fue diseñada para facilitar la interpretación del funcionamiento del proyecto. En ella se representó una vía vehicular con su respectiva zona de paso peatonal, así como la ubicación de los semáforos correspondientes. Estos elementos se conectan directamente a las salidas de la máquina de estados, de manera que la maqueta refleja en tiempo real la secuencia lógica implementada en el circuito.\\
+
+Desde el punto de vista constructivo, la maqueta fue elaborada utilizando materiales livianos y de fácil manipulación, como cartón,paletas, pintura y elementos decorativos. Esto permitió representar la calle, aceras, zonas verdes, señalización y otros detalles visuales que ayudan a mejorar la presentación del proyecto. La distribución de los elementos se realizó procurando que los semáforos fueran visibles y que el usuario pudiera identificar claramente el flujo de operación del sistema.\\
+
+\subsection{Criterios de diseño de la maqueta}
+
+Para el diseño de la maqueta se tomaron en cuenta los siguientes criterios:
+
+\begin{itemize}
+    \item \textbf{Claridad visual:} La maqueta debía permitir identificar fácilmente el semáforo vehicular, el semáforo peatonal, el paso peatonal y el botón de solicitud de cruce.
+
+    \item \textbf{Correspondencia con el circuito:} Cada luz representada en la maqueta debía estar asociada a una salida real del circuito, de forma que el comportamiento físico coincidiera con la lógica implementada en la FSM.
+
+    \item \textbf{Seguridad en las conexiones:} Los LED utilizados en la maqueta fueron conectados mediante resistencias limitadoras y etapas transistorizadas, evitando sobrecargar las salidas de los circuitos integrados.
+
+    \item \textbf{Organización del cableado:} Se procuró mantener las conexiones ordenadas para facilitar la revisión del circuito, reducir errores de conexión y mejorar la presentación general del montaje.
+
+    \item \textbf{Representación realista:} Se añadieron elementos visuales como calle, aceras, señalización y zona peatonal, con el fin de simular un entorno urbano y hacer más comprensible la función del sistema.
+\end{itemize}
+
+En general, la maqueta cumple la función de mostrar de manera práctica el resultado final del proyecto, permitiendo observar cómo la lógica electrónica controla un sistema de semáforo vehicular y peatonal completo. Además, facilita la demostración del funcionamiento ante el usuario, ya que permite visualizar las transiciones de estado, el conteo regresivo y las alertas visuales y auditivas de forma integrada.
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{maqueta_1.jpeg}
+        \caption{Vista general de la maqueta.}
+        \label{fig:maqueta-1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{maqueta_2.jpeg}
+        \caption{Vista general de la maqueta.}
+        \label{fig:maqueta-2}
+    \end{subfigure}
+
+    \vspace{0.3cm}
+
+    \vspace{0.3cm}
+
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{maqueta_5.jpeg}
+        \caption{Muestra del estado $S_3$ en funcionamiento.}
+        \label{fig:maqueta-5}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{maqueta_6.jpeg}
+        \caption{Muestra del estado $S_3$ en funcionamiento.}
+        \label{fig:maqueta-6}
+    \end{subfigure}
+
+    \vspace{0.3cm}
+
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{maqueta_7.jpeg}
+        \caption{Integración de cableado.}
+        \label{fig:maqueta-7}
+    \end{subfigure}
+
+    \caption{Mosaico de fotografías de la maqueta física del sistema de semáforo vehicular y peatonal.}
+    \label{fig:mosaico-maqueta}
+\end{figure}
+
+
+\newpage
+
+\section{Conclusiones}
+
+Se logró comprobar que es completamente viable diseñar un sistema de semáforo vehicular y peatonal complejo utilizando únicamente electrónica básica y componentes discretos, cumpliendo con las especificaciones de diseño sin depender de microcontroladores programables. Esto permitió comprender con mayor profundidad la integración entre lógica digital, etapas de potencia y circuitos de control dentro de una aplicación real.\\
+
+Se verificó que el circuito de potencia cumple con reducir y rectificar de manera segura los $120\,V_{rms}$ de la red eléctrica para entregar salidas fijas y reguladas de $5\,\mathrm{V}$ y $12\,\mathrm{V}$. Durante el diseño, se evidenció que la correcta selección de los capacitores de filtro y desacople es fundamental para reducir el rizado de la señal y absorber el ruido transitorio provocado por los constantes cambios de estado de la lógica digital.
+
+La implementación de la máquina de estados finitos permitió coordinar la secuencia de operación del sistema, logrando que las transiciones entre las distintas fases del semáforo se realizaran de manera ordenada y sincronizada. Adicionalmente, el uso de compuertas lógicas permitió implementar el sistema de control sin requerir microcontroladores.
+
+El sistema de señalización visual y el circuito de generación de sonido complementaron el funcionamiento del semáforo y brindan información tanto visual como auditiva al peatón. La integración de ambos módulos con la máquina de estados permitió sincronizar el conteo regresivo y la variación de la velocidad del tono audible.
+
+Finalmente, la integración de todos los módulos sobre protoboard permitió validar el funcionamiento del sistema completo. Además, el diseño de la PCB para la fuente de alimentación sirvió como una introducción al proceso de diseño de estas tarjetas, permitiendo desarrollar criterios básicos de distribución de componentes.
+
+\begin{thebibliography}{16}
+
+\bibitem{floyd2008}
 T. L. Floyd, \textit{Dispositivos Electrónicos}, 8.a ed. México: Pearson Prentice Hall, 2008.
 
-\bibitem{555video}
+\bibitem{madeincolombia555}
 MADE IN COLOMBIA, ``Circuito integrado 555 explicación completa,'' YouTube, Dec. 16, 2017. [Online]. Available: \url{https://www.youtube.com/watch?v=n15R_n_TshA}
 
-\bibitem{555delay}
+\bibitem{learning555}
 ``Cómo construir un circuito temporizador 555 con un retardo de apagado,'' Learning About Electronics. [Online]. Available: \url{https://www.learningaboutelectronics.com/Articulos/Circuito-temporizador-555-con-retardo-de-apagado.php}
 
-\bibitem{CD4017video}
+\bibitem{electronicaled4017}
 ElectronicaLED, ``Conexión y funcionamiento del circuito integrado CD4017,'' YouTube, Jun. 27, 2020. [Online]. Available: \url{https://www.youtube.com/watch?v=WflcnppydVY}
 
-\bibitem{4017datasheet}
+\bibitem{ic4017}
 ``IC 4017 Datasheet,'' ElecCircuit. [Online]. Available: \url{https://www.eleccircuit.com/ic-4017-datasheet/}
 
-\bibitem{74192}
+\bibitem{74ls192}
 ``74LS192 Decade Up/Down Counter With Clear Datasheet,'' Datasheet Hub. [Online]. Available: \url{https://www.datasheethub.com/74ls192-decade-up-down-counter-with-clear/}
 
-\bibitem{74LS32}
+\bibitem{74ls32}
 ``74LS32 Quad 2-Input OR Logic Gate IC Datasheet,'' Circuits DIY. [Online]. Available: \url{https://www.circuits-diy.com/74ls32-quad-2-input-or-logic-gate-ic-datasheet/}
 
-\bibitem{74LS08}
+\bibitem{74ls08}
 ``74LS08 Quad 2-Input AND Gate Datasheet,'' Datasheet Hub. [Online]. Available: \url{https://www.datasheethub.com/74ls08-quad-2-input-and-gate/}
 
-\bibitem{displayvideo}
+\bibitem{display7seg}
 ``Funcionamiento del display de 7 segmentos,'' YouTube. [Online]. Available: \url{https://www.youtube.com/watch?v=892DbbZ_GYM}
 
-\bibitem{countervideo}
+\bibitem{contadoresdisplays}
 ``Implementación de contadores digitales y displays,'' YouTube. [Online]. Available: \url{https://www.youtube.com/watch?v=PSDCvyHsHbk}
 
-\bibitem{fsmvideo}
+\bibitem{maquinasestados}
 ``Máquinas de estados y lógica secuencial,'' YouTube. [Online]. Available: \url{https://www.youtube.com/watch?v=8t-BtlKVZ7g}
 
-\bibitem{fuentes}
+\bibitem{silva2018}
 J. Silva-Martínez and E. Sánchez-Sinencio, ``Diseño e implementación de fuentes de alimentación lineales reguladas para laboratorios de electrónica,'' \textit{Revista de Educación en Ingeniería Eléctrica}, vol. 14, no. 2, pp. 45--52, Jul. 2018.
 
-\bibitem{Sadiku}
+\bibitem{sadiku2021}
 M. N. O. Sadiku and C. K. Alexander, \textit{Fundamentos de Circuitos Eléctricos}, 7.a ed. Ciudad de México, México: McGraw-Hill, 2021.
 
-\bibitem{74LS14}
+\bibitem{74ls14}
 Renesas Technology Corp., ``HD74LS14 Hex Schmitt Trigger Inverters Datasheet,'' Rev. 3.00, Jul. 2005.
 
-\bibitem{4511}
+\bibitem{hef4511}
 Philips Semiconductors, ``HEF4511B BCD to 7-Segment Latch/Decoder/Driver Datasheet,'' Jan. 1995.
 
-\bibitem{555datasheet}
+\bibitem{ne555}
 Texas Instruments, ``NA555, NE555, SA555, SE555 Precision Timers Datasheet,'' Rev. I, Sep. 2014.
 
 \end{thebibliography}
