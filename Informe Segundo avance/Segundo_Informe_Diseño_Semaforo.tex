@@ -304,8 +304,16 @@ El enrutamiento de las pistas se realizó procurando minimizar cruces innecesari
 \end{figure}
 
 \section{\textbf{Conclusiones}}
-Se logró comprobar que es completamente viable diseñar un sistema de semáforo vehicular y peatonal complejo utilizando únicamente electrónica básica y componentes discretos, cumpliendo con las especificaciones de diseño sin depender de microcontroladores programables. Esto nos ayudó a entender mejor cómo coordinar la lógica digital con bloques de potencia y control en una aplicación del mundo real.
-Se verificó que el circuito de potencia cumple con reducir y rectificar de manera segura los 120 $V_{rms}$ de la red eléctrica para entregar salidas fijas y reguladas de 5 V y 12 V. Durante el diseño, se evidenció que la correcta selección de los capacitores de filtro y desacople es vital para eliminar el rizado y absorber el ruido transitorio provocado por los constantes cambios de estado lógicos.	
+
+Se logró comprobar que es completamente viable diseñar un sistema de semáforo vehicular y peatonal complejo utilizando únicamente electrónica básica y componentes discretos, cumpliendo con las especificaciones de diseño sin depender de microcontroladores programables. Esto permitió comprender con mayor profundidad la integración entre lógica digital, etapas de potencia y circuitos de control dentro de una aplicación real.
+
+Se verificó que el circuito de potencia cumple con reducir y rectificar de manera segura los 120 $V_{rms}$ de la red eléctrica para entregar salidas fijas y reguladas de 5 V y 12 V. Durante el diseño, se evidenció que la correcta selección de los capacitores de filtro y desacople es fundamental para reducir el rizado de la señal y absorber el ruido transitorio provocado por los constantes cambios de estado de la lógica digital.
+
+La implementación de la máquina de estados finitos permitió coordinar la secuencia de operación del sistema, logrando que las transiciones entre las distintas fases del semáforo se realizaran ordenada y sincronizadamente. Adicionalmente, el uso de compuertas logicas permitió implementar el sistema de utilizando sin requerir microcontroladores.
+
+El sistema de señalización visual y el circuito de generación de sonido complementaron el funcionamiento del semáforo y dan información tanto visual como auditiva al peatón. La integración de ambos módulos con la máquina de estados permitió sincronizar el conteo regresivo y la variación de la velocidas del tono audible.
+
+Finalmente, la integración de todos los módulos sobre protoboard permitió validar el funcionamiento del sistema completo. Además, el diseño de la PCB para la fuente de alimentación sirvio como una introducción al proceso de diseño de estas tarjetas, permitiendo desarrollar criterios basicos de distribución de componentes.
 	
 \begin{thebibliography}{99}
 \bibitem{Floyd}
